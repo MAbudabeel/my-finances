@@ -158,6 +158,7 @@
   var CARD_RE = /^(?:عبر|بطاقة|البطاقة|card)\s*:?\s*\*?(\d{4})\s*(?:;\s*(.+))?$/i;
   var BALANCE_RE = /^(?:رصيد|الرصيد|الرصيد المتاح|المبلغ المتبقي|remaining|balance|bal|available balance)\s*:?\s*(.+)$/i;
   var DATE_LINE_RE = /^(?:(?:في|التاريخ|تاريخ|date|on)\s*:?\s*)?\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/i;
+  var INLINE_FIELD = /\s+(?=عبر\s*[:\d]|بـ|لـ|لدى\s*:|من\s*[:;\dA-Za-z]|الى\s*:|إلى\s*:|رصيد\s*:|مبلغ\s*:|القسط\s*:|المبلغ المتبقي|دولة\s*:|بطاقة\s*:|مفوتر\s*:|الخدمة\s*:|الفاتورة\s*:|\d{1,4}\/\d{1,2}\/\d{1,4}\s+\d{1,2}:\d{2})/;
   function last4(s) { if (!s) return null; var m = normDigits(s).match(/(\d{4})(?!.*\d)/); return m ? m[1] : null; }
 
   /** Parse one Al Rajhi alert. Returns a transaction-like object or null (OTP, marketing, unknown). */
@@ -166,6 +167,8 @@
     if (!text || typeof text !== 'string') return null;
     if (IGNORE.test(text)) return null;
     var lines = normDigits(text).split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    // Some iOS versions hand Shortcuts the alert as one line: split it at the field labels.
+    if (lines.length === 1) lines = lines[0].split(INLINE_FIELD).map(function (l) { return l.trim(); }).filter(Boolean);
     if (!lines.length) return null;
     var header = lines[0];
     var rule = TYPE_RULES.find(function (r) { return r.re.test(header); }) || TYPE_RULES.find(function (r) { return r.re.test(text); });
@@ -219,13 +222,19 @@
   // First line of an alert (purchase, card payoff, deposit, transfer, ATM, bill, refund, fee).
   var HEADER_START = /^(شراء|بطاقة[^:\d]*:\s*سداد|إيداع|ايداع|حوالة|تحويل|سحب|سداد|استرداد|استرجاع|رسوم|online purchase|pos purchase|purchase|atm withdrawal|incoming transfer|outgoing transfer|salary|refund)/i;
   function splitMessages(input) {
-    var text = String(input || '').replace(/\r\n?/g, '\n');
+    var text = String(input || '').replace(/\r\n?/g, '\n').replace(/([^\n])##SMS##/g, '$1\n##SMS##');
     var out = [];
     if (/^##SMS##/m.test(text)) {
       var cur = null;
       text.split('\n').forEach(function (line) {
         var m = line.match(MARKER_RE);
-        if (m) { if (cur) out.push(cur); cur = { receivedAt: m[1].trim() || null, lines: [] }; }
+        if (m) {
+          if (cur) out.push(cur);
+          // "##SMS## 2026-11-05T11:53..." carries a date; "##SMS##شراء PoS..." carries the text itself.
+          var rest = m[1].trim();
+          var isDate = /^\d{4}-\d{2}-\d{2}/.test(rest);
+          cur = { receivedAt: isDate ? rest : null, lines: rest && !isDate ? [rest] : [] };
+        }
         else if (cur) cur.lines.push(line);
       });
       if (cur) out.push(cur);

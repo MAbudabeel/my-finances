@@ -326,3 +326,31 @@ test('SADAD bill: payee from الخدمة, Bills, bill number not kept', async (
   // Pasting it again is still recognised as the same text.
   assert.equal((await Core.importTexts(d, sms)).duplicates, 1);
 });
+
+test('file written by newer iOS: ##SMS## on the same line as the text, and one-line texts', async () => {
+  const samples = [
+    ['شراء PoS\nعبر:1111;مدى-ابل باي\nبـSAR 28\nلـCOFFEE AD\n27/10/26 12:10', -28, 'COFFEE AD'],
+    ['شراء إنترنت بـSR 66.50 \nعبر2222;فيزا\nلـAmazon sa\nرصيد:0.47 SR\n26/10/26 13:15', -66.5, 'Amazon sa'],
+    ['حوالة داخلية صادرة بـSR 250\nمن1234\nلـ5678;محمد أحمد\n26/9/28 09:22', -250, 'محمد أحمد'],
+    ['سحب:صراف آلي بSR 100\nعبر1111;مدى\nمنSOME STATION\n27/10/26 17:26', -100, 'SOME STATION'],
+    ['شراء عبر نقاط البيع دولية\nبطاقة:1111;مدى\nمبلغ:SAR 23.00\nدولة:Saudi Arabia\nلدى:bolt.eu\n26/10/18 15:32', -23, 'bolt.eu'],
+    ['خصم: قسط تمويل\nالقسط: 2000.50 SAR\nمن: 1234\nالمبلغ المتبقي: SAR 40000.00\n28/9/26 20:06', -2000.5, null],
+    ['حوالة محلية واردة بـSR 18000.00\nلـ1234\nمن;EMPLOYER COMPANY\n26/9/28 09:01', 18000, 'EMPLOYER COMPANY'],
+  ];
+  for (const [sms, amount, merchant] of samples) {
+    const oneLine = sms.replace(/\n/g, ' ');
+    const t = Core.parseAlRajhiSms(oneLine, { receivedAt: '2026-10-28T09:00:00Z' });
+    assert.ok(t, 'parsed: ' + oneLine);
+    assert.equal(t.amount, amount, oneLine);
+    assert.equal(t.merchant, merchant, oneLine);
+  }
+  // Marker glued to the text, multi-line and one-line entries mixed.
+  const file = '##SMS##' + samples[0][0] + '\n##SMS##' + samples[1][0].replace(/\n/g, ' ') + '\n##SMS## ' + samples[2][0] + '\n';
+  const d = Core.emptyData();
+  const r = await Core.importTexts(d, file);
+  assert.equal(r.inserted, 3, JSON.stringify(r));
+  assert.equal(r.ignored, 0);
+  // No line break between entries.
+  const r2 = await Core.importTexts(Core.emptyData(), '##SMS##' + samples[3][0].replace(/\n/g, ' ') + '##SMS##' + samples[4][0].replace(/\n/g, ' '));
+  assert.equal(r2.inserted, 2, JSON.stringify(r2));
+});
