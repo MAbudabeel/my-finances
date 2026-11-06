@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- connect-src 'none': this page cannot send anything over the network. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self'; manifest-src 'self'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Finances">
+  <meta name="format-detection" content="telephone=no">
+  <title>My Finances</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ============ Start screens ============ -->
+  <div id="screen-loading" class="gate">
+    <div class="gate-card"><div class="gate-mark" aria-hidden="true">﷼</div><p class="muted">Loading…</p></div>
+  </div>
+
+  <div id="screen-setup" class="gate" hidden>
+    <form id="setup-form" class="gate-card" novalidate>
+      <div class="gate-mark" aria-hidden="true">﷼</div>
+      <h1>My Finances</h1>
+      <p class="muted">Everything stays on this phone, encrypted with a password you choose now.</p>
+      <label class="field"><span>Password (12+ characters, a short phrase works well)</span>
+        <input id="setup-pass" type="password" autocomplete="new-password" minlength="12" required></label>
+      <label class="field"><span>Type it again</span>
+        <input id="setup-pass2" type="password" autocomplete="new-password" minlength="12" required></label>
+      <p class="note">There is no way to recover a forgotten password. Keep regular backups (Settings → Back up).</p>
+      <p id="setup-error" class="form-error" role="alert" hidden></p>
+      <button type="submit" class="btn btn-block" id="setup-btn">Create</button>
+      <div class="gate-links">
+        <button type="button" class="btn-link" id="setup-restore">Restore from a backup file</button>
+        <button type="button" class="btn-link" id="setup-demo">Try it with demo data</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="screen-lock" class="gate" hidden>
+    <form id="lock-form" class="gate-card" novalidate>
+      <div class="gate-mark" aria-hidden="true">﷼</div>
+      <h1>My Finances</h1>
+      <p id="lock-pending" class="note" hidden></p>
+      <label class="field"><span>Password</span>
+        <input id="lock-pass" type="password" autocomplete="current-password" required></label>
+      <p id="lock-error" class="form-error" role="alert" hidden></p>
+      <button type="submit" class="btn btn-block" id="lock-btn">Unlock</button>
+      <div class="gate-links">
+        <button type="button" class="btn-link btn-link-danger" id="lock-forgot">Forgot password?</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ App ============ -->
+  <div id="screen-app" hidden>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">﷼</span>
+          <span class="brand-name">My Finances</span>
+        </div>
+        <nav class="tabs" aria-label="Sections">
+          <a href="#overview" id="tab-overview" class="tab" aria-current="page">Overview</a>
+          <a href="#salary" id="tab-salary" class="tab">Salary</a>
+          <a href="#settings" id="tab-settings" class="tab">Settings</a>
+        </nav>
+        <div class="topbar-right">
+          <span id="demo-badge" class="badge badge-warn" hidden>Demo data</span>
+          <label class="month-picker">
+            <span class="sr-only">Month</span>
+            <select id="month-select" aria-label="Choose month"></select>
+          </label>
+          <button id="lock-now" class="btn-ghost" type="button">Lock</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="container">
+      <p id="error-banner" class="banner banner-error" role="alert" hidden></p>
+      <div id="backup-banner" class="banner banner-warn" hidden>
+        <span id="backup-banner-text"></span>
+        <button type="button" class="btn-small" id="backup-banner-btn">Back up now</button>
+      </div>
+      <div id="demo-banner" class="banner banner-info" hidden>
+        <span>Demo data. Nothing is saved on this phone.</span>
+        <button type="button" class="btn-small" id="demo-exit">Exit demo</button>
+      </div>
+
+      <!-- Overview -->
+      <div id="view-overview">
+        <section class="card add-card" aria-labelledby="add-title">
+          <div class="add-row">
+            <div>
+              <h2 id="add-title">Add bank texts</h2>
+              <p class="muted small" id="last-import">No texts added yet.</p>
+            </div>
+            <div class="add-actions">
+              <button type="button" class="btn" id="paste-btn">Paste texts</button>
+              <button type="button" class="btn-outline" id="type-btn">Type…</button>
+            </div>
+          </div>
+          <p id="import-result" class="import-result" role="status" hidden></p>
+        </section>
+
+        <section class="kpis" aria-label="This month at a glance">
+          <article class="kpi">
+            <h2 class="kpi-label">Income</h2>
+            <p class="kpi-value" id="kpi-income">–</p>
+            <p class="kpi-sub"><span id="kpi-salary"></span> <a class="kpi-link" href="#salary">Breakdown</a></p>
+          </article>
+          <article class="kpi">
+            <h2 class="kpi-label">Spending</h2>
+            <p class="kpi-value" id="kpi-spending">–</p>
+            <p class="kpi-sub" id="kpi-spending-sub"></p>
+          </article>
+          <article class="kpi">
+            <h2 class="kpi-label">Left over</h2>
+            <p class="kpi-value" id="kpi-net">–</p>
+            <p class="kpi-sub" id="kpi-net-sub"></p>
+          </article>
+          <article class="kpi">
+            <h2 class="kpi-label">Subscriptions</h2>
+            <p class="kpi-value" id="kpi-subs">–</p>
+            <p class="kpi-sub" id="kpi-subs-sub"></p>
+          </article>
+        </section>
+
+        <div class="grid">
+          <section class="card card-wide" aria-labelledby="trend-title">
+            <div class="card-head">
+              <h2 id="trend-title">Income vs spending</h2>
+              <div class="legend" aria-hidden="true">
+                <span><i class="swatch swatch-income"></i>Income</span>
+                <span><i class="swatch swatch-spend"></i>Spending</span>
+              </div>
+            </div>
+            <div id="trend-chart" class="chart" role="img" aria-label="Monthly income and spending for the last six months"></div>
+            <div class="sr-only"><table id="trend-table"><caption>Monthly income and spending</caption><thead><tr><th>Month</th><th>Income</th><th>Spending</th></tr></thead><tbody></tbody></table></div>
+          </section>
+
+          <section class="card" aria-labelledby="cat-title">
+            <div class="card-head"><h2 id="cat-title">Spending by category</h2></div>
+            <ul id="category-list" class="bars"></ul>
+          </section>
+
+          <section class="card" aria-labelledby="subs-title">
+            <div class="card-head">
+              <h2 id="subs-title">Subscriptions</h2>
+              <span class="muted small" id="subs-total"></span>
+            </div>
+            <ul id="subs-list" class="subs"></ul>
+          </section>
+
+          <section class="card card-wide" aria-labelledby="tx-title">
+            <div class="card-head card-head-wrap">
+              <h2 id="tx-title">Transactions</h2>
+              <div class="filters">
+                <label><span class="sr-only">Search</span><input id="tx-search" type="search" placeholder="Search merchant or note" autocomplete="off"></label>
+                <label><span class="sr-only">Type</span>
+                  <select id="tx-type">
+                    <option value="">All types</option>
+                    <option value="salary">Salary</option>
+                    <option value="income">Other income</option>
+                    <option value="spending">Spending</option>
+                    <option value="subscription">Subscriptions</option>
+                    <option value="refund">Refunds</option>
+                    <option value="transfer">Transfers</option>
+                  </select>
+                </label>
+                <label><span class="sr-only">Category</span><select id="tx-category"><option value="">All categories</option></select></label>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="tx-table">
+                <thead><tr><th scope="col">Date</th><th scope="col">Merchant</th><th scope="col">Category</th><th scope="col" class="num">Amount</th></tr></thead>
+                <tbody id="tx-body"></tbody>
+              </table>
+            </div>
+            <p id="tx-empty" class="empty" hidden>No transactions match.</p>
+            <p class="muted small" id="tx-count"></p>
+          </section>
+        </div>
+      </div>
+
+      <!-- Salary -->
+      <div id="view-salary" hidden>
+        <div class="salary-grid">
+          <section class="card" aria-labelledby="pay-title">
+            <div class="card-head">
+              <h2 id="pay-title">Your pay breakdown</h2>
+              <span class="muted small" id="pay-updated"></span>
+            </div>
+            <p class="muted small intro">Enter the amounts from your payslip once. You can change them any time, for example after a raise.</p>
+            <form id="pay-form" novalidate>
+              <fieldset class="pay-group">
+                <legend>Earnings</legend>
+                <ul id="earning-rows" class="pay-rows"></ul>
+                <button type="button" class="btn-link" id="add-earning">+ Add allowance</button>
+              </fieldset>
+              <fieldset class="pay-group">
+                <legend>Deductions</legend>
+                <ul id="deduction-rows" class="pay-rows"></ul>
+                <div class="pay-actions-inline">
+                  <button type="button" class="btn-link" id="add-deduction">+ Add deduction</button>
+                  <button type="button" class="btn-link" id="calc-gosi" title="Employee share: 9.75% of basic salary plus housing allowance, on up to SAR 45,000">Calculate GOSI</button>
+                </div>
+              </fieldset>
+              <p id="pay-error" class="form-error" role="alert" hidden></p>
+              <div class="pay-footer">
+                <button type="submit" class="btn" id="pay-save">Save</button>
+                <span id="pay-saved" class="muted small" aria-live="polite"></span>
+              </div>
+            </form>
+          </section>
+
+          <section class="card" aria-labelledby="cmp-title">
+            <div class="card-head"><h2 id="cmp-title">Expected vs received</h2></div>
+            <dl class="pay-summary">
+              <div><dt>Gross pay</dt><dd id="pay-gross">–</dd></div>
+              <div><dt>Deductions</dt><dd id="pay-deductions">–</dd></div>
+              <div class="pay-net"><dt>Expected net pay</dt><dd id="pay-expected">–</dd></div>
+              <div><dt id="pay-received-label">Received from Al Rajhi</dt><dd id="pay-received">–</dd></div>
+            </dl>
+            <p id="pay-verdict" class="verdict"></p>
+            <h3 class="sub-title">Last 6 months</h3>
+            <div class="table-wrap">
+              <table class="tx-table pay-history">
+                <thead><tr><th scope="col">Month</th><th scope="col" class="num">Received</th><th scope="col" class="num">Difference</th></tr></thead>
+                <tbody id="pay-history"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div id="view-settings" hidden>
+        <div class="settings-grid">
+          <section class="card" aria-labelledby="bk-title">
+            <div class="card-head"><h2 id="bk-title">Backup</h2></div>
+            <p class="muted small" id="bk-status"></p>
+            <p class="small">Your data lives only in this browser. If you delete Safari's website data, change phones, or don't open the app for a long time, it can be lost. A backup file is encrypted with your password; save it to Files or iCloud Drive.</p>
+            <div class="row-actions">
+              <button type="button" class="btn" id="backup-btn">Back up</button>
+              <button type="button" class="btn-outline" id="restore-btn">Restore a backup</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="iph-title">
+            <div class="card-head"><h2 id="iph-title">Al Rajhi texts</h2></div>
+            <p class="small">An iPhone Shortcut collects each Al Rajhi text as it arrives. Run the “Bank texts” shortcut, then tap <b>Paste texts</b> here. Setup steps are in the guide that came with the app.</p>
+            <p class="small">You can also copy a single text from Messages (press and hold → Copy) and tap <b>Paste texts</b>.</p>
+            <p class="muted small" id="tx-total"></p>
+          </section>
+
+          <section class="card" aria-labelledby="sec-title">
+            <div class="card-head"><h2 id="sec-title">Security</h2></div>
+            <label class="field"><span>Lock automatically after</span>
+              <select id="autolock">
+                <option value="1">1 minute</option>
+                <option value="5">5 minutes</option>
+                <option value="15">15 minutes</option>
+              </select>
+            </label>
+            <p class="muted small">It also locks when you leave the app for more than a minute.</p>
+            <form id="pw-form" novalidate>
+              <h3 class="sub-title">Change password</h3>
+              <label class="field"><span>Current password</span><input id="pw-old" type="password" autocomplete="current-password"></label>
+              <label class="field"><span>New password (12+ characters)</span><input id="pw-new" type="password" autocomplete="new-password"></label>
+              <label class="field"><span>Type the new one again</span><input id="pw-new2" type="password" autocomplete="new-password"></label>
+              <p id="pw-error" class="form-error" role="alert" hidden></p>
+              <div class="pay-footer">
+                <button type="submit" class="btn" id="pw-btn">Change password</button>
+                <span id="pw-done" class="muted small" aria-live="polite"></span>
+              </div>
+            </form>
+          </section>
+
+          <section class="card" aria-labelledby="priv-title">
+            <div class="card-head"><h2 id="priv-title">Privacy</h2></div>
+            <ul class="facts small">
+              <li>No server, no account. Nothing is sent anywhere: the page is not allowed to make network connections.</li>
+              <li>Data is encrypted on this phone (AES-256). Your password is never saved.</li>
+              <li id="persist-status">Checking storage…</li>
+            </ul>
+            <h3 class="sub-title">Delete everything</h3>
+            <p class="small">Removes all transactions, your salary breakdown and your password from this phone. Backup files you saved are not touched.</p>
+            <button type="button" class="btn-danger" id="wipe-btn">Delete all my data</button>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="container footer muted small">
+      Runs on this phone only. Your data never leaves it.
+    </footer>
+  </div>
+
+  <!-- ============ Dialogs ============ -->
+  <dialog id="dlg-type" class="dlg" aria-labelledby="dlg-type-title">
+    <form method="dialog" id="type-form">
+      <h2 id="dlg-type-title">Add bank texts</h2>
+      <p class="muted small">Paste one or more Al Rajhi texts. Texts already added are skipped.</p>
+      <label class="sr-only" for="type-text">Bank texts</label>
+      <textarea id="type-text" rows="9" dir="auto" spellcheck="false" autocomplete="off"></textarea>
+      <div class="dlg-actions">
+        <button type="button" class="btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn" id="type-add" value="add">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-tx" class="dlg" aria-labelledby="dlg-tx-title">
+    <form method="dialog">
+      <h2 id="dlg-tx-title"></h2>
+      <p class="dlg-amount" id="dlg-tx-amount"></p>
+      <p class="muted small" id="dlg-tx-meta"></p>
+      <label class="field"><span>Category</span><select id="dlg-tx-cat"></select></label>
+      <label class="check"><input type="checkbox" id="dlg-tx-remember"> <span>Always use this category for this merchant</span></label>
+      <details class="raw"><summary>Original text</summary><pre id="dlg-tx-raw" dir="auto"></pre></details>
+      <div class="dlg-actions">
+        <button type="button" class="btn-link btn-link-danger" id="dlg-tx-delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn-outline" data-close>Cancel</button>
+        <button type="button" class="btn" id="dlg-tx-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-sub" class="dlg" aria-labelledby="dlg-sub-title">
+    <form method="dialog">
+      <h2 id="dlg-sub-title"></h2>
+      <p class="muted small" id="dlg-sub-meta"></p>
+      <div class="dlg-stack">
+        <button type="button" class="btn-outline" data-status="active">Yes, it's a subscription</button>
+        <button type="button" class="btn-outline" data-status="cancelled">I cancelled it</button>
+        <button type="button" class="btn-outline" data-status="ignored">Not a subscription</button>
+      </div>
+      <div class="dlg-actions"><button type="button" class="btn-link" data-close>Close</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-backup" class="dlg" aria-labelledby="dlg-backup-title">
+    <form method="dialog">
+      <h2 id="dlg-backup-title">Backup ready</h2>
+      <p class="small">Save it to Files (for example iCloud Drive). It's encrypted: you'll need the password you use now to restore it.</p>
+      <div class="dlg-stack">
+        <button type="button" class="btn" id="backup-share">Save backup file</button>
+        <a class="btn-outline" id="backup-download" download>Download instead</a>
+      </div>
+      <div class="dlg-actions"><button type="button" class="btn-link" data-close>Done</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-restore" class="dlg" aria-labelledby="dlg-restore-title">
+    <form method="dialog" id="restore-form" novalidate>
+      <h2 id="dlg-restore-title">Restore a backup</h2>
+      <label class="field"><span>Backup file</span><input id="restore-file" type="file" accept=".json,application/json"></label>
+      <label class="field"><span>Password the backup was made with</span><input id="restore-pass" type="password" autocomplete="off"></label>
+      <p class="note" id="restore-warn">This replaces everything currently in the app.</p>
+      <p id="restore-error" class="form-error" role="alert" hidden></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn" id="restore-go" value="go">Restore</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-wipe" class="dlg" aria-labelledby="dlg-wipe-title">
+    <form method="dialog" id="wipe-form" novalidate>
+      <h2 id="dlg-wipe-title">Delete all data?</h2>
+      <p class="small">This removes everything from this phone and can't be undone. Type <b>DELETE</b> to confirm.</p>
+      <label class="sr-only" for="wipe-confirm">Type DELETE</label>
+      <input id="wipe-confirm" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="dlg-actions">
+        <button type="button" class="btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn-danger" id="wipe-go" value="go" disabled>Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/core.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
