@@ -27,11 +27,11 @@ Then in Safari: open the address → Share → **Add to Home Screen**. Use the H
 ## Getting Al Rajhi texts in (iOS Shortcuts)
 **0. Folder.** Files → Browse → On My iPhone → ⋯ → New Folder → `Finances` (keeps queued texts off iCloud).
 
-**1. Collect texts automatically (one-time setup, iOS 17+).** Shortcuts → Automation → **+** → **Message** → Sender: AlRajhiBank (Message Contains: empty) → **Run Immediately**, Notify When Run off → Next → New Blank Automation, then add:
+**1. Collect texts automatically (one-time setup, iOS 17+).** Shortcuts → Automation → **+** → **Message** → leave Sender empty (Al Rajhi's name-style sender can't be saved as a contact) → **Message Contains**: `بـ` (the letter ب with the stretch mark, copy it from here; it's in front of the amount in every Al Rajhi alert) → **Run Immediately**, Notify When Run off → Next → New Blank Automation, then add:
 1. **Text**: `##SMS##`, return, then the **Shortcut Input** variable (set to **Content**).
 2. **Append to Text File**: append the Text to `bank-texts.txt` in **On My iPhone › Finances**, **Make New Line** on.
 
-The alert's own date and time are used, so no timestamp is needed.
+The alert's own date and time are used, so no timestamp is needed. Other texts that happen to contain `بـ` are saved too, but the app ignores anything that isn't a purchase/transfer/salary-style alert with an amount. If another bank's alert ever slips in, open it in the app and tap Delete.
 
 **2. "Bank texts" shortcut (run when you want to update).** Shortcuts → **+** → name it *Bank texts*:
 1. **Get File** `bank-texts.txt` from On My iPhone › Finances (Show Document Picker off, Error If Not Found off).
