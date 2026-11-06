@@ -279,3 +279,16 @@ test('incoming transfer from an airline is a travel refund, not salary or a tran
   // "من1234" with only digits is an account, not a name.
   assert.equal(Core.parseAlRajhiSms('حوالة داخلية صادرة بـSR 10\nمن1234\nلـ5678;X\n1/11/26 10:00').account_last4, '1234');
 });
+
+test('online purchase at STC with من line: spending in Bills, monthly charges become a subscription', async () => {
+  const sms = 'شراء انترنت بـSR 50.00 \nعبر1111;مدى-ابل باي\nمن1234\nلـSTC\n17/10/26 16:52';
+  const t = Core.parseAlRajhiSms(sms);
+  assert.equal(t.amount, -50);
+  assert.equal(t.merchant, 'STC');
+  const d = Core.emptyData();
+  await Core.importTexts(d, ['17/8/26', '17/9/26', '17/10/26'].map((x) => sms.replace('17/10/26', x)).join('\n'));
+  assert.ok(d.transactions.every((x) => x.category === 'bills'));
+  const sub = Core.subscriptionsOut(d)[0];
+  assert.equal(sub.name, 'Stc');
+  assert.equal(sub.status, 'active');
+});
