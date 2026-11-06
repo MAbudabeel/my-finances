@@ -292,3 +292,14 @@ test('online purchase at STC with من line: spending in Bills, monthly charges 
   assert.equal(sub.name, 'Stc');
   assert.equal(sub.status, 'active');
 });
+
+test('international POS (key:value lines): merchant from لدى:, yy/m/d date, transport', () => {
+  const t = Core.parseAlRajhiSms('شراء عبر نقاط البيع دولية\nبطاقة:1111;مدى\nمبلغ:SAR 23.00\nدولة:Saudi Arabia\nلدى:bolt.eu\n26/10/18 15:32', { receivedAt: '2026-10-18T12:33:00Z' });
+  assert.equal(t.amount, -23);
+  assert.equal(t.merchant, 'bolt.eu');
+  assert.equal(t.date, '2026-10-18T15:32:00+03:00');
+  assert.equal(Core.categorize({ ...t, amount: -2300 }).category, 'transport');
+  // Day-first texts still read day-first.
+  assert.equal(Core.parseSmsDate('3/11/26 22:05', '2026-11-03T19:06:00Z'), '2026-11-03T22:05:00+03:00');
+  assert.equal(Core.parseSmsDate('28/9/26 20:06', '2026-09-28T17:07:00Z'), '2026-09-28T20:06:00+03:00');
+});

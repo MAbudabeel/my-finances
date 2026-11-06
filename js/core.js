@@ -131,13 +131,15 @@
       }
       else if ((m = v.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4}|\d{2})(?!\d)/))) {
         d = m[1]; mo = m[2]; y = m[3].length === 2 ? '20' + m[3] : m[3];
-        // A d/m/yy reading in the future (beyond 2 days) means it was yy/m/d.
+        // Al Rajhi uses both d/m/yy (card alerts) and yy/m/d (transfers): pick the
+        // reading that isn't in the future and is closest to when the text arrived.
         var ref = fallback ? new Date(fallback) : new Date();
         if (isNaN(ref)) ref = new Date();
-        var asDmy = Date.UTC(+y, +mo - 1, +d);
-        if (m[3].length === 2 && +m[3] >= 1 && +m[3] <= 31 && asDmy - ref.getTime() > 2 * DAY) {
-          var alt = Date.UTC(2000 + +m[1], +m[2] - 1, +m[3]);
-          if (alt - ref.getTime() <= 2 * DAY) { y = String(2000 + +m[1]); mo = m[2]; d = m[3]; }
+        if (m[3].length === 2 && +m[3] >= 1 && +m[3] <= 31 && +m[1] <= 99) {
+          var r = ref.getTime();
+          var asDmy = Date.UTC(+y, +mo - 1, +d), asYmd = Date.UTC(2000 + +m[1], +m[2] - 1, +m[3]);
+          var okDmy = asDmy - r <= 2 * DAY, okYmd = asYmd - r <= 2 * DAY && new Date(asYmd).getUTCDate() === +m[3];
+          if (okYmd && (!okDmy || Math.abs(r - asYmd) < Math.abs(r - asDmy))) { y = String(2000 + +m[1]); mo = m[2]; d = m[3]; }
         }
       }
       if (y && +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) {
