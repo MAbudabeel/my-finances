@@ -217,3 +217,65 @@ test('monthly incoming transfers of the same size become salary', async () => {
   assert.ok(d.transactions.every((t) => t.category === 'salary'));
 });
 
+
+test('transfer between own accounts is a transfer, and a text caught twice is added once', async () => {
+  const sms = 'حوالة بين حساباتك\nمبلغ:SR 1000\nمن:1234\nالى:5678\n26/9/28 09:17';
+  const t = Core.parseAlRajhiSms(sms);
+  assert.equal(t.amount, -1000);
+  assert.equal(t.raw_category, 'own_transfer');
+  assert.equal(t.date, '2026-09-28T09:17:00+03:00');
+  const d = Core.emptyData();
+  const r = await Core.importTexts(d, '##SMS##\n' + sms + '\n##SMS##\n' + sms);
+  assert.equal(r.inserted, 1);
+  assert.equal(r.duplicates, 1);
+  assert.equal(d.transactions[0].category, 'transfer');
+  const s = Core.monthSummary(d, '2026-09');
+  assert.equal(s.spending, 0);
+  assert.equal(s.income, 0);
+});
+
+test('outgoing internal transfer to a person: money out, name after ";"', async () => {
+  const sms = 'حوالة داخلية صادرة بـSR 2500\nمن1234\nلـ5678;محمد أحمد\n26/9/28 09:22';
+  const t = Core.parseAlRajhiSms(sms);
+  assert.equal(t.amount, -2500);
+  assert.equal(t.raw_category, 'transfer_out');
+  assert.equal(t.merchant, 'محمد أحمد');
+  assert.equal(t.date, '2026-09-28T09:22:00+03:00');
+  assert.equal(Core.categorize({ ...t, amount: -250000 }).category, 'transfer');
+});
+
+test('loan installment: the installment is spending (Loans), the remaining amount is ignored', async () => {
+  const sms = 'خصم: قسط تمويل\nالقسط: 2000.50 SAR\nمن: 1234\nالمبلغ المتبقي: SAR 40000.00\n28/9/26 20:06';
+  const t = Core.parseAlRajhiSms(sms);
+  assert.equal(t.amount, -2000.5);
+  assert.equal(t.raw_category, 'loan_installment');
+  assert.equal(t.balance_after, 40000);
+  assert.equal(t.date, '2026-09-28T20:06:00+03:00', 'day-first date');
+  const d = Core.emptyData();
+  await Core.importTexts(d, ['28/8/26', '28/9/26', '28/10/26'].map((dt) => sms.replace('28/9/26', dt)).join('\n'));
+  assert.ok(d.transactions.every((x) => x.category === 'financing'));
+  assert.equal(Core.monthSummary(d, '2026-09').spending, 2000.5);
+  const loan = d.subscriptions.find((x) => x.category === 'financing');
+  assert.ok(loan, 'detected as a recurring payment');
+  assert.equal(loan.kind, 'recurring');
+  assert.equal(loan.cycle, 'monthly');
+});
+
+test('incoming transfer from an airline is a travel refund, not salary or a transfer', async () => {
+  const sms = 'حوالة محلية واردة بـSR 398\nلـ1234\nمن8004;FLYADEAL AIRLINE COMPANY ONE PERSON\n26/10/6 09:04';
+  const t = Core.parseAlRajhiSms(sms);
+  assert.equal(t.amount, 398);
+  assert.equal(t.merchant, 'FLYADEAL AIRLINE COMPANY ONE PERSON');
+  assert.equal(t.date, '2026-10-06T09:04:00+03:00');
+  const d = Core.emptyData();
+  await Core.importTexts(d, sms);
+  assert.equal(d.transactions[0].category, 'travel');
+  assert.equal(d.transactions[0].type, 'refund');
+  const s = Core.monthSummary(d, '2026-10');
+  assert.equal(s.income, 0);
+  assert.equal(s.refunds, 398);
+  // A big refund from a company that's a known merchant is still not salary.
+  assert.equal(Core.categorize({ ...t, amount: 250000 }).category, 'travel');
+  // "من1234" with only digits is an account, not a name.
+  assert.equal(Core.parseAlRajhiSms('حوالة داخلية صادرة بـSR 10\nمن1234\nلـ5678;X\n1/11/26 10:00').account_last4, '1234');
+});
