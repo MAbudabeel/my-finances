@@ -88,7 +88,7 @@
     { re: /بطاقة[^\n:]*:\s*سداد|سداد\s*(بطاقة|البطاقة)|card\s*(re)?payment/i, type: 'card_payment', channel: 'transfer', sign: +1 },
     { re: /راتب|salary|payroll/i, type: 'salary', channel: 'transfer', sign: +1 },
     { re: /استرداد|استرجاع|refund|reversal/i, type: 'refund', channel: 'other', sign: +1 },
-    { re: /(حوالة|تحويل)\s*(واردة|وارد)|incoming (transfer|remittance)|transfer received/i, type: 'transfer_in', channel: 'transfer', sign: +1 },
+    { re: /(حوالة|تحويل)[^\n\d]*?(واردة|وارد)|incoming (transfer|remittance)|transfer received/i, type: 'transfer_in', channel: 'transfer', sign: +1 },
     { re: /إيداع|ايداع|deposit/i, type: 'deposit', channel: 'other', sign: +1 },
     { re: /(حوالة|تحويل)|outgoing (transfer|remittance)|transfer/i, type: 'transfer_out', channel: 'transfer', sign: -1 },
     { re: /سحب|صراف|atm|withdrawal/i, type: 'atm_withdrawal', channel: 'atm', sign: -1 },
@@ -121,7 +121,17 @@
     if (value) {
       var v = normDigits(value), m, y, mo, d;
       if ((m = v.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/))) { y = m[1]; mo = m[2]; d = m[3]; }
-      else if ((m = v.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4}|\d{2})(?!\d)/))) { d = m[1]; mo = m[2]; y = m[3].length === 2 ? '20' + m[3] : m[3]; }
+      else if ((m = v.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4}|\d{2})(?!\d)/))) {
+        d = m[1]; mo = m[2]; y = m[3].length === 2 ? '20' + m[3] : m[3];
+        // A d/m/yy reading in the future (beyond 2 days) means it was yy/m/d.
+        var ref = fallback ? new Date(fallback) : new Date();
+        if (isNaN(ref)) ref = new Date();
+        var asDmy = Date.UTC(+y, +mo - 1, +d);
+        if (m[3].length === 2 && +m[3] >= 1 && +m[3] <= 31 && asDmy - ref.getTime() > 2 * DAY) {
+          var alt = Date.UTC(2000 + +m[1], +m[2] - 1, +m[3]);
+          if (alt - ref.getTime() <= 2 * DAY) { y = String(2000 + +m[1]); mo = m[2]; d = m[3]; }
+        }
+      }
       if (y && +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) {
         var t = v.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
         var date = y + '-' + pad(mo) + '-' + pad(d);
@@ -133,8 +143,8 @@
   }
   var AMOUNT_RE = new RegExp('(?:^|\\s)(?:بـ|ب\\s|بمبلغ|مبلغ\\s*:|المبلغ\\s*:|amount\\s*:|amt\\s*:)\\s*(' + CUR + '?\\s*' + NUM + '\\s*' + CUR + '?)', 'i');
   var MERCHANT_RE = /^(?:لـ|لدى\s*:?|at\s*:|merchant\s*:)\s*(.+)$/i;
-  var TO_RE = /^(?:إلى|الى|to)\s*:\s*(.+)$/i;
-  var FROM_RE = /^(?:من|from)\s*:\s*(.+)$/i;
+  var TO_RE = /^(?:إلى|الى|to)\s*[:;]\s*(.+)$/i;
+  var FROM_RE = /^(?:من|from)\s*[:;]\s*(.+)$/i;
   var CARD_RE = /^(?:عبر|بطاقة|البطاقة|card)\s*:?\s*\*?(\d{4})\s*(?:;\s*(.+))?$/i;
   var BALANCE_RE = /^(?:رصيد|الرصيد|الرصيد المتاح|balance|bal|available balance)\s*:?\s*(.+)$/i;
   var DATE_LINE_RE = /^(?:(?:في|التاريخ|تاريخ|date|on)\s*:?\s*)?\d{1,4}[-/.]\d{1,2}[-/.]\d{2,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/i;
@@ -159,7 +169,10 @@
       if ((m = line.match(BALANCE_RE))) { balance = balance || parseAmount(m[1]); return; }
       if (DATE_LINE_RE.test(line)) { dateText = dateText || line; return; }
       if (line === header) return;
-      if (!merchant && (m = line.match(MERCHANT_RE))) { merchant = m[1].trim(); return; }
+      if (!merchant && (m = line.match(MERCHANT_RE))) {
+        if (/^\*?\d{3,}$/.test(m[1].trim())) { to = to || m[1].trim(); return; }
+        merchant = m[1].trim(); return;
+      }
       if (!to && (m = line.match(TO_RE))) { to = m[1].trim(); return; }
       if (!from && (m = line.match(FROM_RE))) { from = m[1].trim(); return; }
     });
@@ -271,6 +284,7 @@
     ['entertainment', ['cinema', 'vox', 'muvi', 'amc', 'سينما', 'webook', 'boulevard', 'بوليفارد', 'riyadh season', 'موسم', 'steam', 'game']],
     ['shopping', ['amazon', 'أمازون', 'noon', 'نون', 'namshi', 'نمشي', 'jarir', 'جرير', 'extra', 'اكسترا', 'ikea', 'ايكيا', 'shein', 'شي ان', 'centrepoint', 'centerpoint', 'h&m', 'zara', 'max fashion', 'redtag', 'red tag', 'sephora', 'nice one', 'نايس ون', 'golden scent', 'aliexpress', 'temu', 'apple store', 'virgin megastore', 'saco', 'ساكو', 'home centre', 'homecentre', 'mall', 'مول']]
   ];
+  var EMPLOYER_RE = /(company|\bco\b|corp|\bltd\b|limited|\best\b|establishment|group|holding|ministry|شركة|مؤسسة|مجموعة|وزارة|هيئة)/i;
   var HINTS = { transfer_in: 'transfer', transfer_out: 'transfer', card_payment: 'transfer', fee: 'bank_fees', bill_payment: 'bills' };
 
   function normalizeText(s) {
@@ -297,6 +311,7 @@
     var isCredit = t.amount > 0;
     var hint = normalizeText(t.raw_category);
     if (hint === 'salary' && isCredit) return { category: 'salary', source: 'auto' };
+    if (hint === 'transfer_in' && t.amount >= 150000 && EMPLOYER_RE.test(text)) return { category: 'salary', source: 'auto' };
     if (hint === 'atm_withdrawal' && !isCredit) return { category: 'cash', source: 'auto' };
     if (hint === 'card_payment') return { category: 'transfer', source: 'auto' };
     for (var j = 0; j < COMPILED.length; j++) {
@@ -635,8 +650,10 @@
     // Salary: a steady monthly credit of at least 1,500 SAR not already classified.
     var salaryUpdates = 0;
     creditGroups.forEach(function (credits) {
-      var auto = credits.filter(function (c) { return c.category_source === 'auto' && c.category === 'income'; });
-      if (auto.length < 2 || credits.some(function (c) { return c.category === 'transfer'; })) return;
+      var auto = credits.filter(function (c) {
+        return c.category_source === 'auto' && (c.category === 'income' || (c.category === 'transfer' && c.raw_category === 'transfer_in'));
+      });
+      if (auto.length < 2 || credits.some(function (c) { return c.category === 'transfer' && c.category_source !== 'auto'; })) return;
       var info = analyzeGroup(credits);
       if (!info || info.cycle !== 'monthly' || info.amount < 150000) return;
       auto.forEach(function (c) { c.category = 'salary'; c.type = 'salary'; salaryUpdates++; });

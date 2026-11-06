@@ -192,3 +192,28 @@ test('merchant names with markup are kept as plain text', async () => {
   await Core.importTexts(d, 'شراء PoS\nعبر:1111;مدى\nبـSAR 5\nلـ<img src=x onerror=alert(1)>\n1/11/26 10:00');
   assert.equal(d.transactions[0].merchant, '<img src=x onerror=alert(1)>');
 });
+
+// Real local-transfer layout (from the user, amount and names changed).
+test('incoming local transfer from an employer is salary income', async () => {
+  const sms = 'حوالة محلية واردة بـSR 18000.00\nلـ1234\nمن;EMPLOYER COMPANY\n26/9/28 09:01';
+  const t = Core.parseAlRajhiSms(sms, { receivedAt: '2026-09-28T06:02:00Z' });
+  assert.equal(t.amount, 18000);
+  assert.equal(t.raw_category, 'transfer_in');
+  assert.equal(t.merchant, 'EMPLOYER COMPANY');
+  assert.equal(t.date, '2026-09-28T09:01:00+03:00', 'yy/m/d when d/m/yy would be in the future');
+  const d = Core.emptyData();
+  await Core.importTexts(d, sms);
+  assert.equal(d.transactions[0].category, 'salary');
+  assert.equal(Core.monthSummary(d, '2026-09').salary, 18000);
+  // A small incoming transfer from a person stays a transfer.
+  const p = Core.parseAlRajhiSms('حوالة محلية واردة بـSR 300\nلـ1234\nمن;AHMED\n1/11/26 10:00', { receivedAt: '2026-11-01T07:00:00Z' });
+  assert.equal(Core.categorize({ ...p, amount: 30000 }).category, 'transfer');
+  assert.equal(p.date, '2026-11-01T10:00:00+03:00', 'normal d/m/yy unchanged');
+});
+
+test('monthly incoming transfers of the same size become salary', async () => {
+  const d = Core.emptyData();
+  await Core.importTexts(d, ['27/8/26', '27/9/26', '27/10/26'].map((dt) => `حوالة محلية واردة بـSR 9000\nلـ1234\nمن;ABDULLAH\n${dt} 09:00`).join('\n'));
+  assert.ok(d.transactions.every((t) => t.category === 'salary'));
+});
+
