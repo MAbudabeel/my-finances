@@ -152,7 +152,7 @@
     return null;
   }
   var AMOUNT_RE = new RegExp('(?:^|\\s)(?:بـ|ب\\s|ب(?=(?:SAR|SR|USD|EUR|GBP|AED)\\s*\\d)|بمبلغ|مبلغ\\s*:|المبلغ\\s*:|القسط\\s*:|amount\\s*:|amt\\s*:)\\s*(' + CUR + '?\\s*' + NUM + '\\s*' + CUR + '?)', 'i');
-  var MERCHANT_RE = /^(?:لـ|لدى\s*:?|at\s*:|merchant\s*:)\s*(.+)$/i;
+  var MERCHANT_RE = /^(?:لـ|لدى\s*:?|الخدمة\s*:|at\s*:|merchant\s*:)\s*(.+)$/i;
   var TO_RE = /^(?:إلى|الى|to)\s*[:;]\s*(.+)$/i;
   var FROM_RE = /^(?:من|from)\s*[:;]?\s*((?:\*?\d{3,}\s*;?\s*)?.*)$/i; // من: X, من;X, من1234, من1234;X
   var CARD_RE = /^(?:عبر|بطاقة|البطاقة|card)\s*:?\s*\*?(\d{4})\s*(?:;\s*(.+))?$/i;
@@ -286,7 +286,7 @@
     ['charity', ['zakat', 'زكاة', 'ehsan', 'إحسان', 'charity', 'صدقة', 'donation', 'تبرع', 'jood']],
     ['transfer', ['transfer', 'تحويل', 'حوالة', 'sarie', 'سريع', 'stc pay', 'stcpay', 'urpay', 'own account', 'internal transfer', 'credit card payment', 'سداد بطاقة']],
     ['subscriptions', ['netflix', 'shahid', 'شاهد', 'spotify', 'anghami', 'أنغامي', 'osn', 'starzplay', 'starz play', 'disney', 'youtube premium', 'youtube', 'apple.com/bill', 'apple.com', 'itunes', 'icloud', 'google one', 'google storage', 'google *', 'amazon prime', 'primevideo', 'prime video', 'openai', 'chatgpt', 'anthropic', 'claude.ai', 'microsoft', 'xbox', 'playstation', 'psn', 'adobe', 'canva', 'dropbox', 'linkedin', 'fitness time', 'fitnesstime', 'وقت اللياقة', "gold's gym", 'golds gym', 'nuvola', 'tod tv', 'beinsports', 'bein', 'audible', 'kindle unl']],
-    ['bills', ['saudi electricity', 'الكهرباء', 'sec bill', 'national water', 'المياه', 'nwc', 'stc', 'mobily', 'موبايلي', 'zain', 'زين', 'virgin mobile', 'lebara', 'salam mobile', 'sawa', 'jawwy', 'سداد فاتورة', 'bill payment', 'sadad bill']],
+    ['bills', ['saudi electricity', 'الكهرباء', 'كهرباء', 'مياه', 'sec bill', 'national water', 'المياه', 'nwc', 'stc', 'mobily', 'موبايلي', 'zain', 'زين', 'virgin mobile', 'lebara', 'salam mobile', 'sawa', 'jawwy', 'سداد فاتورة', 'bill payment', 'sadad bill']],
     ['government', ['absher', 'أبشر', 'moi', 'وزارة الداخلية', 'muqeem', 'مقيم', 'traffic', 'مخالفة', 'المرور', 'passport', 'الجوازات', 'iqama', 'إقامة', 'balady', 'بلدي', 'najiz', 'ناجز', 'zatca', 'gosi', 'sadad moi', 'government']],
     ['cash', ['atm', 'cash withdrawal', 'سحب نقدي', 'سحب']],
     ['bank_fees', ['fee', 'رسوم', 'commission', 'عمولة', 'vat on fee', 'annual fee']],
@@ -457,7 +457,8 @@
           original_amount: originalAmount,
           original_currency: originalCurrency,
           subscription_id: null,
-          raw: typeof t.raw === 'string' ? t.raw.slice(0, 2000) : null,
+          // Long numbers (bill, reference, IBAN) are masked in the saved copy of the text.
+          raw: typeof t.raw === 'string' ? t.raw.slice(0, 2000).replace(/\d{8,}/g, function (n) { return '…' + n.slice(-3); }) : null,
           created_at: now
         };
         data.transactions.push(tx);

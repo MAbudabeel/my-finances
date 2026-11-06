@@ -312,3 +312,17 @@ test('ATM withdrawal with plain ب before the amount: Cash, location kept', () =
   assert.equal(t.date, '2026-10-27T17:26:00+03:00');
   assert.equal(Core.categorize({ ...t, amount: -50000 }).category, 'cash');
 });
+
+test('SADAD bill: payee from الخدمة, Bills, bill number not kept', async () => {
+  const sms = 'سداد فاتورة\nمن:1234\nمبلغ:SAR 200.00\nمفوتر:002\nالخدمة:الشركة السعودية للكهرباء\nالفاتورة:10000000001\n26/2/26 21:57';
+  const t = Core.parseAlRajhiSms(sms);
+  assert.equal(t.amount, -200);
+  assert.equal(t.merchant, 'الشركة السعودية للكهرباء');
+  assert.equal(t.date, '2026-02-26T21:57:00+03:00');
+  const d = Core.emptyData();
+  await Core.importTexts(d, sms);
+  assert.equal(d.transactions[0].category, 'bills');
+  assert.ok(!d.transactions[0].raw.includes('10000000001'));
+  // Pasting it again is still recognised as the same text.
+  assert.equal((await Core.importTexts(d, sms)).duplicates, 1);
+});
