@@ -25,19 +25,21 @@ It's a set of static files that must be opened once from an HTTPS address. After
 Then in Safari: open the address → Share → **Add to Home Screen**. Use the Home Screen icon from then on: iOS keeps a Home Screen app's data, but Safari can clear a website's data if it isn't opened for a few weeks. Note that the Home Screen app and a Safari tab have **separate** storage on iOS: pick one (Home Screen) and stick with it.
 
 ## Getting Al Rajhi texts in (iOS Shortcuts)
-**1. Collect texts automatically (one-time setup).** Shortcuts → Automation → **+** → **Message** → Sender: AlRajhiBank (Message Contains: empty) → **Run Immediately** → New Blank Automation, then add:
-1. **Text**: type `##SMS## ` then insert the **Current Date** variable (tap it → Date Format: ISO 8601), press return, then insert **Shortcut Input** (→ Content).
-2. **Append to Text File**: append the Text to `bank-texts.txt` (turn on "Make New Line"). Put it in a folder under **On My iPhone** (e.g. On My iPhone › Finances), not iCloud Drive: queued texts are plain text until you paste them into the app, and this keeps them off iCloud.
+**0. Folder.** Files → Browse → On My iPhone → ⋯ → New Folder → `Finances` (keeps queued texts off iCloud).
 
-This runs silently in the background and only adds the text to a file on your phone.
+**1. Collect texts automatically (one-time setup, iOS 17+).** Shortcuts → Automation → **+** → **Message** → Sender: AlRajhiBank (Message Contains: empty) → **Run Immediately**, Notify When Run off → Next → New Blank Automation, then add:
+1. **Text**: `##SMS##`, return, then the **Shortcut Input** variable (set to **Content**).
+2. **Append to Text File**: append the Text to `bank-texts.txt` in **On My iPhone › Finances**, **Make New Line** on.
+
+The alert's own date and time are used, so no timestamp is needed.
 
 **2. "Bank texts" shortcut (run when you want to update).** Shortcuts → **+** → name it *Bank texts*:
-1. **Get File** `bank-texts.txt` from the same On My iPhone folder (turn off "Show Document Picker"; turn off "Error If Not Found").
-2. **Copy to Clipboard** (File).
-3. **Save File**: save an empty **Text** to that same `bank-texts.txt` with **Overwrite If File Exists** on (empties the queue).
-4. Optional: **Show Notification** "Bank texts copied. Open Finances and tap Paste texts."
+1. **Get File** `bank-texts.txt` from On My iPhone › Finances (Show Document Picker off, Error If Not Found off).
+2. **Copy to Clipboard**.
+3. **Text** containing just `-`, then **Save File** that Text to the same `bank-texts.txt` (Ask Where to Save off, Overwrite If File Exists on). This empties the queue; the app ignores the `-`.
+4. Optional: **Show Notification** "Bank texts copied, open Finances."
 
-Add it to the Home Screen next to the app (or to Back Tap).
+Add it to the Home Screen next to the app.
 
 **3. In the app:** open Finances → unlock → **Paste texts** → tap **Paste** when iOS asks.
 Texts already added are skipped, so pasting the same batch twice is safe.

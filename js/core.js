@@ -216,7 +216,7 @@
     }
     return out.map(function (m) {
       return { text: m.lines.join('\n').trim(), receivedAt: m.receivedAt || null };
-    }).filter(function (m) { return m.text; });
+    }).filter(function (m) { return m.text && !/^-+$/.test(m.text); });
   }
 
   // ======================================================================
