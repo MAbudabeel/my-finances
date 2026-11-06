@@ -151,7 +151,7 @@
     if (fallback) { var f = new Date(fallback); if (!isNaN(f)) return toRiyadhIso(f); }
     return null;
   }
-  var AMOUNT_RE = new RegExp('(?:^|\\s)(?:بـ|ب\\s|بمبلغ|مبلغ\\s*:|المبلغ\\s*:|القسط\\s*:|amount\\s*:|amt\\s*:)\\s*(' + CUR + '?\\s*' + NUM + '\\s*' + CUR + '?)', 'i');
+  var AMOUNT_RE = new RegExp('(?:^|\\s)(?:بـ|ب\\s|ب(?=(?:SAR|SR|USD|EUR|GBP|AED)\\s*\\d)|بمبلغ|مبلغ\\s*:|المبلغ\\s*:|القسط\\s*:|amount\\s*:|amt\\s*:)\\s*(' + CUR + '?\\s*' + NUM + '\\s*' + CUR + '?)', 'i');
   var MERCHANT_RE = /^(?:لـ|لدى\s*:?|at\s*:|merchant\s*:)\s*(.+)$/i;
   var TO_RE = /^(?:إلى|الى|to)\s*[:;]\s*(.+)$/i;
   var FROM_RE = /^(?:من|from)\s*[:;]?\s*((?:\*?\d{3,}\s*;?\s*)?.*)$/i; // من: X, من;X, من1234, من1234;X
@@ -194,7 +194,7 @@
     });
     if (!amount) return null;
 
-    var counterparty = merchant || (rule.sign > 0 ? from : to) || null;
+    var counterparty = merchant || (rule.sign > 0 ? from : to) || (rule.type === 'atm_withdrawal' ? from : null) || null;
     var foreign = amount.currency !== 'SAR';
     var headerType = header.replace(AMOUNT_RE, '').trim();
     return {

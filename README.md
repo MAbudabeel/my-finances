@@ -31,7 +31,7 @@ Then in Safari: open the address → Share → **Add to Home Screen**. Use the H
 1. **Text**: `##SMS##`, return, then the **Shortcut Input** variable (set to **Content**).
 2. **Append to Text File**: append the Text to `bank-texts.txt` in **On My iPhone › Finances**, **Make New Line** on.
 
-**1b. Second automation** for texts without بـ (transfers between your accounts write "مبلغ:SR", loan installments "القسط:"): repeat step 1 with **Message Contains** `مبلغ`. A text caught by both automations is saved twice in the file but added to the app only once.
+**1b. Second automation** for texts without بـ (transfers between your accounts write "مبلغ:SR", loan installments "القسط:"): repeat step 1 with **Message Contains** `مبلغ`. Add a **third** the same way with `سحب` for ATM withdrawals (they write the amount as "بSR", without the stretch mark). A text caught by more than one automation is saved more than once in the file but added to the app only once.
 
 The alert's own date and time are used, so no timestamp is needed. Other texts that happen to contain `بـ` are saved too, but the app ignores anything that isn't a purchase/transfer/salary-style alert with an amount. If another bank's alert ever slips in, open it in the app and tap Delete.
 

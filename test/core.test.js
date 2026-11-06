@@ -303,3 +303,12 @@ test('international POS (key:value lines): merchant from لدى:, yy/m/d date, t
   assert.equal(Core.parseSmsDate('3/11/26 22:05', '2026-11-03T19:06:00Z'), '2026-11-03T22:05:00+03:00');
   assert.equal(Core.parseSmsDate('28/9/26 20:06', '2026-09-28T17:07:00Z'), '2026-09-28T20:06:00+03:00');
 });
+
+test('ATM withdrawal with plain ب before the amount: Cash, location kept', () => {
+  const t = Core.parseAlRajhiSms('سحب:صراف آلي بSR 500\nعبر1111;مدى\nمنSOME STATION\n27/10/26 17:26', { receivedAt: '2026-10-27T14:27:00Z' });
+  assert.equal(t.amount, -500);
+  assert.equal(t.raw_category, 'atm_withdrawal');
+  assert.equal(t.merchant, 'SOME STATION');
+  assert.equal(t.date, '2026-10-27T17:26:00+03:00');
+  assert.equal(Core.categorize({ ...t, amount: -50000 }).category, 'cash');
+});
