@@ -43,6 +43,10 @@ The alert's own date and time are used, so no timestamp is needed. Other texts t
 
 Add it to the Home Screen next to the app.
 
+**Automatic option (recommended).** At the end of the automation, add **Get File** (`bank-texts.txt`, same folder, Error If Not Found off) and **Copy to Clipboard**. Then you don't need the "Bank texts" shortcut: when you unlock Finances it reads the clipboard during the Unlock tap (iOS asks you to tap **Paste**) and adds anything new. Trade-off: each Al Rajhi text replaces whatever you had copied, and the clipboard holds your bank texts until the next unlock. Turn it off in Settings → Security.
+
+What iOS doesn't allow: a website app can't run in the background, read your files, or read the clipboard without a tap. So the one tap on Paste at unlock is the minimum.
+
 **3. In the app:** open Finances → unlock → **Paste texts** → tap **Paste** when iOS asks.
 Texts already added are skipped, so pasting the same batch twice is safe.
 

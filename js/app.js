@@ -15,6 +15,7 @@
   var settings = loadSettings();
   // Wrong-password count survives reloads (localStorage holds only these two numbers).
   var lockState = (function () { try { var v = JSON.parse(localStorage.getItem('finance-lock') || '{}'); return { failed: +v.failed || 0, waitUntil: +v.waitUntil || 0 }; } catch (e) { return { failed: 0, waitUntil: 0 }; } })();
+  var clipRead = null; // asked once per app start, kept across wrong-password tries
   function saveLockState() { try { localStorage.setItem('finance-lock', JSON.stringify(lockState)); } catch (e) { /* ignore */ } }
 
   var categoryLabels = {};
@@ -56,8 +57,8 @@
   function closeDialog(id) { var d = $(id); if (d.close) d.close(); else d.removeAttribute('open'); }
 
   function loadSettings() {
-    var s = { autolock: 5 };
-    try { var raw = localStorage.getItem('finance-settings'); if (raw) { var p = JSON.parse(raw); if ([1, 5, 15].indexOf(p.autolock) !== -1) s.autolock = p.autolock; } } catch (e) { /* defaults */ }
+    var s = { autolock: 5, autoPaste: true };
+    try { var raw = localStorage.getItem('finance-settings'); if (raw) { var p = JSON.parse(raw); if ([1, 5, 15].indexOf(p.autolock) !== -1) s.autolock = p.autolock; if (p.autoPaste === false) s.autoPaste = false; } } catch (e) { /* defaults */ }
     return s;
   }
   function saveSettings() { try { localStorage.setItem('finance-settings', JSON.stringify(settings)); } catch (e) { /* ignore */ } }
@@ -132,6 +133,11 @@
     if (!p) { showFormError('lock-error', 'Enter your password.'); return; }
     var btn = $('lock-btn');
     btn.disabled = true; btn.textContent = 'Unlocking…';
+    // Pick up bank texts the iPhone automation left on the clipboard. Must start inside this tap.
+    if (settings.autoPaste && !clipRead && navigator.clipboard && navigator.clipboard.readText) {
+      clipRead = navigator.clipboard.readText().catch(function () { return null; });
+    }
+    var clip = clipRead || Promise.resolve(null);
     Store.unlock(p).then(function (r) {
       session = r.session;
       data = Core.validateData(r.data);
@@ -140,6 +146,7 @@
       showFormError('lock-error', '');
       Store.persist();
       enterApp();
+      clip.then(autoImport);
     }).catch(function (err) {
       $('lock-pass').value = '';
       if (err && err.code === 'WRONG_PASSWORD') {
@@ -513,6 +520,19 @@
     });
   }
 
+  // Texts found on the clipboard at unlock: add them quietly, report only when something is new.
+  var BANK_HINT = /##SMS##|بـ|مبلغ|سحب|القسط/;
+  function autoImport(text) {
+    if (!text || !BANK_HINT.test(text) || text.length > 2000000) return;
+    Core.importTexts(data, text).then(function (r) {
+      if (!r.inserted) return;
+      var box = $('import-result');
+      box.textContent = 'Added ' + r.inserted + ' new transaction' + (r.inserted === 1 ? '' : 's') + ' from your bank texts.';
+      box.dataset.tone = 'good'; box.hidden = false;
+      persist(); renderAll();
+    });
+  }
+
   function onPaste() {
     var box = $('import-result');
     if (!navigator.clipboard || !navigator.clipboard.readText) { openType(); return; }
@@ -790,6 +810,7 @@
     if (view === 'overview') renderTrend();
     if (view === 'settings') {
       $('autolock').value = String(settings.autolock);
+      $('autopaste').checked = settings.autoPaste;
       Store.persisted().then(function (p) {
         $('persist-status').textContent = p
           ? 'This browser has agreed to keep the data (it won’t clear it to free space).'
@@ -854,6 +875,7 @@
     $('wipe-btn').addEventListener('click', function () { $('wipe-confirm').value = ''; $('wipe-go').disabled = true; openDialog('dlg-wipe'); });
     $('wipe-confirm').addEventListener('input', function () { $('wipe-go').disabled = $('wipe-confirm').value.trim().toUpperCase() !== 'DELETE'; });
     $('wipe-form').addEventListener('submit', onWipe);
+    $('autopaste').addEventListener('change', function () { settings.autoPaste = $('autopaste').checked; saveSettings(); });
     $('autolock').addEventListener('change', function () { settings.autolock = Number($('autolock').value) || 5; saveSettings(); });
 
     $('add-earning').addEventListener('click', function () { $('earning-rows').appendChild(payRow({ label: '', type: 'earning', amount: '' })); });
