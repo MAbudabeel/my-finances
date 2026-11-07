@@ -384,3 +384,15 @@ test('saved transactions are re-sorted once after a keyword update, manual choic
   assert.equal(d.transactions[1].category, 'dining');
   assert.equal(Core.upgradeCategories(d), false);
 });
+
+test('unknown shops are listed until the user picks, and "Other" stops the asking', async () => {
+  const d = Core.emptyData();
+  const t = (m, a) => `شراء PoS\nعبر:1111;مدى\nبـSAR ${a}\nلـ${m}\n1/11/26 10:${a}\n`;
+  await Core.importTexts(d, [t('XYZ TRADING EST', 11), t('XYZ TRADING EST', 12), t('QWE ABC', 13), t('ALBAIK 1', 14)].join('\n'));
+  let u = Core.unknownShops(d);
+  assert.deepEqual(u.map((s) => s.merchant), ['XYZ TRADING EST', 'QWE ABC']);
+  Core.recategorize(d, u[0].tx_id, 'groceries', true);
+  Core.recategorize(d, u[1].tx_id, 'other', true);
+  assert.equal(Core.unknownShops(d).length, 0);
+  assert.ok(d.transactions.filter((x) => x.merchant === 'XYZ TRADING EST').every((x) => x.category === 'groceries'));
+});

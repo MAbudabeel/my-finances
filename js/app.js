@@ -218,6 +218,7 @@
     renderMonth();
     renderSubscriptions();
     renderImportStatus();
+    renderShopsBanner();
     renderBackupStatus();
     if (window.location.hash === '#salary') loadSalary(true);
   }
@@ -497,6 +498,48 @@
     var last = data.meta && data.meta.last_import_at;
     $('last-import').textContent = last ? 'Last added ' + stampFmt.format(new Date(last)) : 'No texts added yet.';
     $('tx-total').textContent = data.transactions.length + ' transactions saved on this phone.';
+  }
+
+  // ---------- shops that need a category ----------
+  function renderShopsBanner() {
+    var n = Core.unknownShops(data).length, b = $('shops-btn');
+    b.hidden = n === 0;
+    b.textContent = n === 1 ? '1 shop needs your pick' : n + ' shops need your pick';
+  }
+
+  function openShops() {
+    var shops = Core.unknownShops(data).slice(0, 30), list = $('shops-list');
+    if (!shops.length) return;
+    clear(list);
+    shops.forEach(function (s) {
+      var li = el('li');
+      var name = el('div', 'shop-name', s.merchant); name.setAttribute('dir', 'auto');
+      li.appendChild(name);
+      li.appendChild(el('div', 'muted small', s.count + (s.count === 1 ? ' purchase' : ' purchases') + ' · ' + money(-num(-s.total)).replace('-', '') + ' · last ' + s.last_date));
+      var sel = el('select');
+      sel.setAttribute('aria-label', 'Category for ' + s.merchant);
+      sel.dataset.tx = s.tx_id;
+      var o = el('option', null, 'Choose…'); o.value = ''; sel.appendChild(o);
+      Core.CATEGORIES.forEach(function (cat) {
+        if (cat.kind !== 'spending' && cat.id !== 'transfer') return;
+        var opt = el('option', null, cat.id === 'other' ? 'Other (don’t ask again)' : cat.label); opt.value = cat.id; sel.appendChild(opt);
+      });
+      li.appendChild(sel);
+      list.appendChild(li);
+    });
+    openDialog('dlg-shops');
+  }
+
+  function saveShops() {
+    var picks = Array.prototype.slice.call($('shops-list').querySelectorAll('select')).filter(function (s) { return s.value; });
+    closeDialog('dlg-shops');
+    if (!picks.length) return;
+    try {
+      picks.forEach(function (s) { Core.recategorize(data, Number(s.dataset.tx), s.value, true); });
+    } catch (e) { showError('Could not save those categories.'); }
+    persist();
+    renderAll();
+    if (salaryState.loaded) loadSalary(true);
   }
 
   function addTexts(text) {
@@ -848,6 +891,8 @@
       $('type-text').value = '';
     });
 
+    $('shops-btn').addEventListener('click', openShops);
+    $('shops-save').addEventListener('click', saveShops);
     $('dlg-tx-save').addEventListener('click', function () {
       if (!txOpen) return;
       var cat = $('dlg-tx-cat').value, remember = $('dlg-tx-remember').checked;

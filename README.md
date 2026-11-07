@@ -5,7 +5,7 @@ The laptop version in `finance-app/` is unchanged and separate; they don't share
 
 ## What it does
 - Reads Al Rajhi alert texts (same parser as the laptop version: PoS, online purchase, Visa card payoff as a transfer, salary, transfers, ATM, bills, refunds; OTPs and offers ignored).
-- Categories tuned for Saudi spending (groceries, dining, coffee, fuel, rides, car, health, personal care, home, shopping, bills, government, and more; hundreds of local merchant names in English and Arabic). Change any transaction and tick "Always use this category" to teach it a merchant. Subscription detection (price changes, cancelled, "not a subscription"), refunds net off spending, Riyadh dates, Salary tab with GOSI helper.
+- Categories tuned for Saudi spending (groceries, dining, coffee, fuel, rides, car, health, personal care, home, shopping, bills, government, and more; hundreds of local merchant names in English and Arabic). Shops it can't place show a small "N shops need your pick" button under Add bank texts; picking once teaches it that shop (choose Other to stop being asked). Nothing pops up on its own. Subscription detection (price changes, cancelled, "not a subscription"), refunds net off spending, Riyadh dates, Salary tab with GOSI helper.
 - Blue/white dashboard in SAR.
 
 ## Privacy and security

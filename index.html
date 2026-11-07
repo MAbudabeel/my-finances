@@ -109,6 +109,7 @@
             </div>
           </div>
           <p id="import-result" class="import-result" role="status" hidden></p>
+          <button type="button" class="ask-banner" id="shops-btn" hidden></button>
         </section>
 
         <section class="kpis" aria-label="This month at a glance">
@@ -333,6 +334,19 @@
         <span class="spacer"></span>
         <button type="button" class="btn-outline" data-close>Cancel</button>
         <button type="button" class="btn" id="dlg-tx-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-shops" class="dlg" aria-labelledby="dlg-shops-title">
+    <form method="dialog">
+      <h2 id="dlg-shops-title">Which category are these shops?</h2>
+      <p class="muted small">Pick once and every text from that shop will follow. Choose “Other” to stop being asked about a shop.</p>
+      <ul id="shops-list" class="shops-list"></ul>
+      <div class="dlg-actions">
+        <span class="spacer"></span>
+        <button type="button" class="btn-outline" data-close>Later</button>
+        <button type="button" class="btn" id="shops-save">Save</button>
       </div>
     </form>
   </dialog>
