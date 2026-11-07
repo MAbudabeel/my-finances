@@ -410,3 +410,4 @@ td.num .tx-desc { text-align: right; }
 .eye-btn .eye-off, .privacy .eye-btn .eye-on { display: none; }
 .privacy .eye-btn .eye-off { display: inline; }
 .privacy .pay-amount, .privacy #dlg-wallet-amount, .privacy #dlg-wallet-limit { -webkit-text-security: disc; text-security: disc; }
+.app-ver { display: block; margin-top: 4px; opacity: .8; }

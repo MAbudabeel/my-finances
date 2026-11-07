@@ -1342,6 +1342,25 @@
     });
   }
 
+  // ---------- app version & updates ----------
+  var APP_VERSION = '22'; // keep in step with VERSION in sw.js
+  function showVersion() { $('app-version').textContent = APP_VERSION; $('footer-version').textContent = APP_VERSION; }
+  // Fetch the newest app files: ask for a new offline worker, drop the old cached files, reload.
+  // Reloading locks the app, so the data is saved first.
+  function checkUpdate() {
+    var btn = $('update-btn');
+    btn.disabled = true;
+    $('update-status').textContent = 'Checking…';
+    var sw = navigator.serviceWorker && navigator.serviceWorker.getRegistration
+      ? navigator.serviceWorker.getRegistration().then(function (r) { return r && r.update(); }).catch(function () {})
+      : Promise.resolve();
+    saving.then(function () { return sw; }).then(function () {
+      return window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : null;
+    }).catch(function () {}).then(function () {
+      window.location.replace(window.location.pathname + '?u=' + Date.now() + '#settings');
+    });
+  }
+
   // ---------- views ----------
   function showView() {
     var h = window.location.hash;
@@ -1397,6 +1416,8 @@
     $('setup-restore').addEventListener('click', function () { openRestore(true); });
     $('lock-forgot').addEventListener('click', function () { $('wipe-confirm').value = ''; $('wipe-go').disabled = true; openDialog('dlg-wipe'); });
     $('lock-now').addEventListener('click', lock);
+    $('update-btn').addEventListener('click', checkUpdate);
+    showVersion();
     $('demo-exit').addEventListener('click', function () { window.location.replace(window.location.pathname); });
 
     $('paste-btn').addEventListener('click', onPaste);

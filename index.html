@@ -407,6 +407,9 @@
               <li>Data is encrypted on this phone (AES-256). Your password is never saved.</li>
               <li id="persist-status">Checking storage…</li>
             </ul>
+            <h3 class="sub-title">App version</h3>
+            <p class="small">This phone has version <b id="app-version"></b>. <span id="update-status"></span></p>
+            <button type="button" class="btn-outline" id="update-btn">Check for update</button>
             <h3 class="sub-title">Delete everything</h3>
             <p class="small">Removes all transactions, your salary breakdown and your password from this phone. Backup files you saved are not touched.</p>
             <button type="button" class="btn-danger" id="wipe-btn">Delete all my data</button>
@@ -416,7 +419,7 @@
     </main>
 
     <footer class="container footer muted small">
-      Runs on this phone only. Your data never leaves it.
+      Runs on this phone only. Your data never leaves it. <span class="app-ver">Version <span id="footer-version"></span></span>
     </footer>
   </div>
 
