@@ -79,10 +79,12 @@
         </nav>
         <div class="topbar-right">
           <span id="demo-badge" class="badge badge-warn" hidden>Demo data</span>
-          <label class="month-picker">
-            <span class="sr-only">Month</span>
-            <select id="month-select" aria-label="Choose month"></select>
-          </label>
+          <div class="month-picker">
+            <button type="button" class="btn-ghost month-step" id="month-prev" aria-label="Previous month">‹</button>
+            <label><span class="sr-only">Month</span>
+              <select id="month-select" aria-label="Choose month"></select></label>
+            <button type="button" class="btn-ghost month-step" id="month-next" aria-label="Next month">›</button>
+          </div>
           <button id="lock-now" class="btn-ghost" type="button">Lock</button>
         </div>
       </div>

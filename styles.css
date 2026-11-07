@@ -302,3 +302,8 @@ td.num .tx-desc { text-align: right; }
 .ask-warn { color: #8a5a00; background: #fff4d6; }
 .ask-warn::after { content: " ›"; }
 .stmt-row { margin: 10px 0 0; }
+.month-picker { display: inline-flex; align-items: center; gap: 6px; }
+.month-step { min-width: 36px; min-height: 40px; padding: 0 8px; font-size: 20px; line-height: 1; }
+.month-step:disabled { opacity: 0.35; cursor: default; }
+.month-picker label { flex: none; }
+.month-picker select { min-width: 7.5em; }

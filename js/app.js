@@ -26,6 +26,7 @@
   var sarShort = new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', notation: 'compact', maximumFractionDigits: 1 });
   var monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' });
   var monthShort = new Intl.DateTimeFormat('en-GB', { month: 'short' });
+  var monthShort = new Intl.DateTimeFormat('en-GB', { month: 'short' });
   var dayFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
   var dayYearFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   var stampFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -311,6 +312,7 @@
 
   function renderAll() {
     buildMonthOptions();
+    updateMonthSteps();
     renderMonth();
     renderSubscriptions();
     renderImportStatus();
@@ -327,7 +329,7 @@
     if (months.indexOf(currentMonth()) === -1) months.push(currentMonth());
     if (months.indexOf(state.month) === -1) state.month = currentMonth();
     months.sort().reverse().forEach(function (m) {
-      var o = el('option', null, monthFmt.format(parseMonth(m)));
+      var o = el('option', null, monthShort.format(parseMonth(m)) + ' ' + m.slice(0, 4));
       o.value = m;
       if (m === state.month) o.selected = true;
       sel.appendChild(o);
@@ -711,6 +713,7 @@
       if (r.matched) parts.push(r.matched + ' were already added from your texts.');
       if (r.duplicates) parts.push(r.duplicates + ' already imported.');
       if (r.skipped) parts.push(r.skipped + ' could not be read.');
+      if (r.inserted) parts.push('Use ‹ at the top to see earlier months.');
       box.textContent = parts.join(' ');
       box.dataset.tone = r.inserted ? 'good' : '';
       if (r.inserted) { persist(); renderAll(); }
@@ -982,7 +985,7 @@
       $('view-' + v).hidden = v !== view;
       if (v === view) $('tab-' + v).setAttribute('aria-current', 'page'); else $('tab-' + v).removeAttribute('aria-current');
     });
-    $('month-select').parentNode.hidden = view !== 'overview';
+    $('month-select').closest('.month-picker').hidden = view !== 'overview';
     if (!data) return;
     if (view === 'salary') loadSalary();
     if (view === 'overview') renderTrend();
@@ -1003,6 +1006,19 @@
     state.month = m;
     $('month-select').value = m;
     renderMonth();
+    updateMonthSteps();
+  }
+  // ‹ › step through the months that have data (the list is newest first).
+  function stepMonth(dir) {
+    var opts = Array.prototype.map.call($('month-select').options, function (o) { return o.value; });
+    var i = opts.indexOf(state.month) - dir;
+    if (i >= 0 && i < opts.length) selectMonth(opts[i]);
+  }
+  function updateMonthSteps() {
+    var opts = Array.prototype.map.call($('month-select').options, function (o) { return o.value; });
+    var i = opts.indexOf(state.month);
+    $('month-prev').disabled = i === -1 || i >= opts.length - 1;
+    $('month-next').disabled = i <= 0;
   }
 
   // ---------- wiring ----------
@@ -1073,6 +1089,8 @@
     $('pay-form').addEventListener('submit', savePay);
 
     $('month-select').addEventListener('change', function (e) { selectMonth(e.target.value); });
+    $('month-prev').addEventListener('click', function () { stepMonth(-1); });
+    $('month-next').addEventListener('click', function () { stepMonth(1); });
     $('tx-search').addEventListener('input', function () { renderTransactions(false); });
     $('tx-type').addEventListener('change', function () { renderTransactions(false); });
     $('tx-category').addEventListener('change', function () { renderTransactions(false); });
