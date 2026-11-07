@@ -96,8 +96,12 @@
       return;
     }
     Store.exists().then(function (has) {
-      screen(has ? 'lock' : 'setup');
-      setTimeout(function () { var f = $(has ? 'lock-pass' : 'setup-pass'); if (f) f.focus(); }, 50);
+      if (!has) { screen('setup'); setTimeout(function () { $('setup-pass').focus(); }, 50); return; }
+      return Store.quickKind().then(function (kind) {
+        setLockMode(kind || 'password', !!kind);
+        screen('lock');
+        if (lockMode !== 'passkey') setTimeout(function () { var f = $(lockMode === 'pin' ? 'lock-pin' : 'lock-pass'); if (f) f.focus(); }, 50);
+      });
     }).catch(function (err) {
       console.error(err);
       screen('setup');
@@ -125,33 +129,64 @@
     }).then(function () { btn.disabled = false; btn.textContent = 'Create'; });
   }
 
+  // How the lock screen asks: 'passkey' (Face ID), 'pin' or 'password'.
+  var lockMode = 'password', hasQuick = false;
+  function setLockMode(mode, quick) {
+    lockMode = mode; hasQuick = quick;
+    $('face-btn').hidden = mode !== 'passkey';
+    $('pin-field').hidden = mode !== 'pin';
+    $('pass-field').hidden = mode !== 'password';
+    $('lock-btn').hidden = mode === 'passkey';
+    $('lock-use-pass').hidden = mode === 'password';
+    showFormError('lock-error', '');
+  }
+
+  // Pick up bank texts the iPhone automation left on the clipboard. Must start inside the Unlock tap.
+  function startClipboardRead() {
+    if (settings.autoPaste && !clipRead && navigator.clipboard && navigator.clipboard.readText) {
+      clipRead = navigator.clipboard.readText().catch(function () { clipRead = null; return null; });
+    }
+    return clipRead || Promise.resolve(null);
+  }
+
+  function unlocked(r, clip) {
+    session = r.session;
+    data = Core.validateData(r.data);
+    var resorted = Core.upgradeCategories(data);
+    lockState = { failed: 0, waitUntil: 0 }; saveLockState();
+    $('lock-pass').value = ''; $('lock-pin').value = '';
+    showFormError('lock-error', '');
+    Store.persist();
+    enterApp();
+    if (resorted) persist();
+    clip.then(autoImport);
+  }
+
+  function lockWait() {
+    var wait = Math.ceil((lockState.waitUntil - Date.now()) / 1000);
+    if (wait > 0) { showFormError('lock-error', 'Too many tries. Wait ' + wait + ' seconds.'); return true; }
+    return false;
+  }
+
   function onUnlock(e) {
     e.preventDefault();
-    var wait = Math.ceil((lockState.waitUntil - Date.now()) / 1000);
-    if (wait > 0) { showFormError('lock-error', 'Too many tries. Wait ' + wait + ' seconds.'); return; }
-    var p = $('lock-pass').value;
-    if (!p) { showFormError('lock-error', 'Enter your password.'); return; }
+    if (lockMode === 'passkey') { onFace(); return; }
+    if (lockWait()) return;
+    var pin = lockMode === 'pin';
+    var p = $(pin ? 'lock-pin' : 'lock-pass').value;
+    if (!p) { showFormError('lock-error', pin ? 'Enter your PIN.' : 'Enter your password.'); return; }
+    if (pin && !/^\d{6}$/.test(p)) { showFormError('lock-error', 'The PIN is 6 digits.'); return; }
     var btn = $('lock-btn');
     btn.disabled = true; btn.textContent = 'Unlocking…';
-    // Pick up bank texts the iPhone automation left on the clipboard. Must start inside this tap.
-    if (settings.autoPaste && !clipRead && navigator.clipboard && navigator.clipboard.readText) {
-      clipRead = navigator.clipboard.readText().catch(function () { return null; });
-    }
-    var clip = clipRead || Promise.resolve(null);
-    Store.unlock(p).then(function (r) {
-      session = r.session;
-      data = Core.validateData(r.data);
-      var resorted = Core.upgradeCategories(data);
-      lockState = { failed: 0, waitUntil: 0 }; saveLockState();
-      $('lock-pass').value = '';
-      showFormError('lock-error', '');
-      Store.persist();
-      enterApp();
-      if (resorted) persist();
-      clip.then(autoImport);
-    }).catch(function (err) {
-      $('lock-pass').value = '';
-      if (err && err.code === 'WRONG_PASSWORD') {
+    var clip = startClipboardRead();
+    (pin ? Store.unlockPin(p) : Store.unlock(p)).then(function (r) { unlocked(r, clip); }).catch(function (err) {
+      $('lock-pass').value = ''; $('lock-pin').value = '';
+      if (err && err.code === 'WRONG_PIN') {
+        showFormError('lock-error', 'Wrong PIN. ' + err.left + (err.left === 1 ? ' try' : ' tries') + ' left before you need your password.');
+      } else if (err && err.code === 'PIN_OFF') {
+        setLockMode('password', false);
+        showFormError('lock-error', 'Too many wrong PINs, so the PIN was turned off. Use your password, then set a new PIN in Settings.');
+      } else if (err && err.code === 'WRONG_PASSWORD') {
         lockState.failed++;
         if (lockState.failed >= 5) lockState.waitUntil = Date.now() + 30000 * Math.pow(2, Math.min(lockState.failed - 5, 10));
         saveLockState();
@@ -161,6 +196,67 @@
         showFormError('lock-error', (err && err.message) || 'Could not open your data.');
       }
     }).then(function () { btn.disabled = false; btn.textContent = 'Unlock'; });
+  }
+
+  function onFace() {
+    var btn = $('face-btn');
+    btn.disabled = true;
+    var clip = startClipboardRead();
+    Store.unlockPasskey().then(function (r) { unlocked(r, clip); }).catch(function (err) {
+      console.warn(err);
+      var cancelled = err && (err.name === 'NotAllowedError' || err.name === 'AbortError');
+      showFormError('lock-error', cancelled ? 'Face ID was cancelled. Tap to try again, or use your password.' : (err && err.message) || 'Face ID did not work. Use your password.');
+    }).then(function () { btn.disabled = false; });
+  }
+
+  // ---------- quick unlock settings ----------
+  function renderQuick() {
+    Store.quickKind().then(function (kind) {
+      $('quick-status').textContent = kind === 'passkey' ? 'On: you unlock with Face ID.' : kind === 'pin' ? 'On: you unlock with a 6-digit PIN.' : 'Off. You unlock with your password.';
+      $('quick-off').hidden = !kind;
+      $('quick-face').textContent = kind === 'passkey' ? 'Set up Face ID again' : 'Use Face ID';
+      $('quick-pin-btn').textContent = kind === 'pin' ? 'Change PIN' : 'Use a 6-digit PIN';
+    });
+  }
+  function quickBusy(on) { ['quick-face', 'quick-pin-btn', 'quick-off'].forEach(function (id) { $(id).disabled = on; }); }
+  function quickPassword() {
+    if (demo) { showFormError('quick-error', 'Not available in demo mode.'); return null; }
+    var p = $('quick-pass').value;
+    if (!p) { showFormError('quick-error', 'Enter your password first.'); $('quick-pass').focus(); return null; }
+    return p;
+  }
+  function quickFailed(err) {
+    console.warn(err);
+    var msg = err && err.code === 'WRONG_PASSWORD' ? 'That password is wrong.'
+      : err && err.code === 'NO_PRF' ? 'This iPhone can’t use Face ID for this app (it needs iOS 18 or newer with iCloud Keychain on). Use a 6-digit PIN instead.'
+      : err && (err.name === 'NotAllowedError' || err.name === 'AbortError') ? 'Face ID was cancelled.'
+      : (err && err.message) || 'Could not turn it on.';
+    showFormError('quick-error', msg);
+  }
+  function onQuickFace() {
+    showFormError('quick-error', '');
+    var p = quickPassword(); if (!p) return;
+    quickBusy(true);
+    saving.then(function () { return Store.enablePasskey(p); }).then(function () {
+      $('quick-pass').value = '';
+      showFormError('quick-error', '');
+    }).catch(quickFailed).then(function () { quickBusy(false); renderQuick(); });
+  }
+  function onQuickPin() {
+    showFormError('quick-error', '');
+    var field = $('quick-pin-field');
+    if (field.hidden) { field.hidden = false; $('quick-pin').focus(); $('quick-pin-btn').textContent = 'Save PIN'; return; }
+    var pin = $('quick-pin').value;
+    if (!/^\d{6}$/.test(pin)) { showFormError('quick-error', 'The PIN must be 6 digits.'); return; }
+    if (/^(\d)\1{5}$/.test(pin) || '0123456789'.indexOf(pin) !== -1 || '9876543210'.indexOf(pin) !== -1) { showFormError('quick-error', 'Pick a PIN that is harder to guess than ' + pin + '.'); return; }
+    var p = quickPassword(); if (!p) return;
+    quickBusy(true);
+    saving.then(function () { return Store.enablePin(p, pin); }).then(function () {
+      $('quick-pass').value = ''; $('quick-pin').value = ''; field.hidden = true;
+    }).catch(quickFailed).then(function () { quickBusy(false); renderQuick(); });
+  }
+  function onQuickOff() {
+    Store.disableQuick().then(renderQuick);
   }
 
   function startDemo() {
@@ -687,7 +783,8 @@
     btn.disabled = true; $('pw-done').textContent = 'Changing…';
     saving.then(function () { return Store.changePassword(o, n, data); }).then(function (s) {
       session = s;
-      $('pw-done').textContent = 'Password changed. Old backups still need the old password, so make a new backup.';
+      $('pw-done').textContent = 'Password changed. Old backups still need the old password, so make a new backup. Quick unlock was turned off: turn it on again above.';
+      renderQuick();
     }).catch(function (err) {
       $('pw-done').textContent = '';
       showFormError('pw-error', err && err.code === 'WRONG_PASSWORD' ? 'Current password is wrong.' : 'Could not change the password.');
@@ -854,6 +951,7 @@
     if (view === 'salary') loadSalary();
     if (view === 'overview') renderTrend();
     if (view === 'settings') {
+      renderQuick();
       $('autolock').value = String(settings.autolock);
       $('autopaste').checked = settings.autoPaste;
       Store.persisted().then(function (p) {
@@ -892,6 +990,11 @@
     });
 
     $('shops-btn').addEventListener('click', openShops);
+    $('face-btn').addEventListener('click', onFace);
+    $('lock-use-pass').addEventListener('click', function () { setLockMode('password', hasQuick); $('lock-pass').focus(); });
+    $('quick-face').addEventListener('click', onQuickFace);
+    $('quick-pin-btn').addEventListener('click', onQuickPin);
+    $('quick-off').addEventListener('click', onQuickOff);
     $('shops-save').addEventListener('click', saveShops);
     $('dlg-tx-save').addEventListener('click', function () {
       if (!txOpen) return;

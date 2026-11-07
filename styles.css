@@ -293,3 +293,7 @@ td.num .tx-desc { text-align: right; }
 .shops-list li:first-child { border-top: 0; }
 .shops-list .shop-name { font-weight: 600; overflow-wrap: anywhere; }
 .shops-list select { font: inherit; font-size: 16px; width: 100%; margin-top: 6px; border: 1px solid var(--border-strong); border-radius: 10px; padding: 9px 10px; background: var(--surface); color: var(--text); }
+
+.btn-face { margin-bottom: 14px; min-height: 48px; }
+.quick-actions { flex-wrap: wrap; gap: 8px; }
+.gate-links { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; }

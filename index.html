@@ -49,11 +49,15 @@
       <div class="gate-mark" aria-hidden="true">﷼</div>
       <h1>My Finances</h1>
       <p id="lock-pending" class="note" hidden></p>
-      <label class="field"><span>Password</span>
+      <button type="button" class="btn btn-block btn-face" id="face-btn" hidden>Unlock with Face ID</button>
+      <label class="field" id="pin-field" hidden><span>PIN</span>
+        <input id="lock-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"></label>
+      <label class="field" id="pass-field"><span>Password</span>
         <input id="lock-pass" type="password" autocomplete="current-password" required></label>
       <p id="lock-error" class="form-error" role="alert" hidden></p>
       <button type="submit" class="btn btn-block" id="lock-btn">Unlock</button>
       <div class="gate-links">
+        <button type="button" class="btn-link" id="lock-use-pass" hidden>Use password instead</button>
         <button type="button" class="btn-link btn-link-danger" id="lock-forgot">Forgot password?</button>
       </div>
     </form>
@@ -274,6 +278,19 @@
             </label>
             <p class="muted small">It also locks when you leave the app for more than a minute.</p>
             <label class="check"><input type="checkbox" id="autopaste"> <span>Add bank texts from the clipboard when I unlock (iOS asks you to tap Paste)</span></label>
+            <div id="quick-box">
+              <h3 class="sub-title">Quick unlock</h3>
+              <p class="small" id="quick-status">Off. You unlock with your password.</p>
+              <label class="field" id="quick-pass-field"><span>Your password (needed once to turn it on)</span><input id="quick-pass" type="password" autocomplete="current-password"></label>
+              <label class="field" id="quick-pin-field" hidden><span>New 6-digit PIN</span><input id="quick-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"></label>
+              <p id="quick-error" class="form-error" role="alert" hidden></p>
+              <div class="pay-footer quick-actions">
+                <button type="button" class="btn" id="quick-face">Use Face ID</button>
+                <button type="button" class="btn-outline" id="quick-pin-btn">Use a 6-digit PIN</button>
+                <button type="button" class="btn-outline" id="quick-off" hidden>Turn off</button>
+              </div>
+              <p class="muted small">Your password still works and is still needed for backups. Changing the password or restoring a backup turns quick unlock off.</p>
+            </div>
             <form id="pw-form" novalidate>
               <h3 class="sub-title">Change password</h3>
               <label class="field"><span>Current password</span><input id="pw-old" type="password" autocomplete="current-password"></label>
