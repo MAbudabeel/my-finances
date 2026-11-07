@@ -83,7 +83,7 @@ const OUT = process.argv[2] || __dirname;
     await page.click('#tab-wallets');
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
     ok(sw <= w, `no horizontal scroll at ${w}px (${sw})`);
-    if (w === 320) await page.screenshot({ path: OUT + '/w5-320.png' });
+    if (w === 320) { await page.screenshot({ path: OUT + '/w5-320.png', fullPage: true }); await page.click('.wal-row:has-text("ANB")'); await page.waitForSelector('#dlg-wallet[open]'); await page.screenshot({ path: OUT + '/w6-anb.png' }); await page.click('#dlg-wallet [data-close]'); }
   }
   ok(errors.length === 0, 'no console errors ' + errors.join(' | '));
   await browser.close();

@@ -544,7 +544,9 @@
       var m = el('td', 'tx-main');
       var open = el('button', 'tx-open');
       open.type = 'button';
-      open.appendChild(el('span', 'tx-merchant', t.merchant || t.description || 'Unknown'));
+      var mer = el('span', 'tx-merchant', t.merchant || t.description || 'Unknown');
+      if (t.account) mer.insertBefore(walletBadge(t.account, 'sm'), mer.firstChild);
+      open.appendChild(mer);
       var desc = [t.account ? walletNames[t.account] : null, t.link ? 'between your accounts' : (t.description !== t.merchant ? t.description : null)].filter(Boolean).join(' · ');
       if (desc) open.appendChild(el('span', 'tx-desc', desc));
       open.addEventListener('click', function () { openTx(t.id); });
@@ -1108,6 +1110,63 @@
     return Number(s);
   }
 
+  // Simple original badges: each wallet's colour plus its initials (no official logos).
+  var BADGE = {
+    stcpay: { bg: '#4F008C', fg: '#FFFFFF', top: 'stc', sub: 'pay' },
+    d360: { bg: '#00695C', fg: '#FFFFFF', top: 'D', sub: '360' },
+    urpay: { bg: '#D81B60', fg: '#FFFFFF', top: 'ur', sub: 'pay' },
+    barq: { bg: '#FFB300', fg: '#1F2937', bolt: true },
+    anb: { card: true }
+  };
+  var badgeSeq = 0;
+  function txt(x, y, size, weight, fill, s, extra) {
+    var t = svg('text', Object.assign({ x: x, y: y, 'font-size': size, 'font-weight': weight, fill: fill, 'text-anchor': 'middle', 'font-family': '-apple-system, system-ui, sans-serif' }, extra || {}));
+    t.textContent = s;
+    return t;
+  }
+  /** Badge for a wallet. size 'sm' (lists), 'md' (wallet rows) or 'lg' (wallet details). */
+  function walletBadge(id, size) {
+    var b = BADGE[id];
+    if (!b) return el('span');
+    var px = { sm: 22, md: 42, lg: 64 }[size || 'md'];
+    var s;
+    if (b.card) {
+      // ANB Visa Signature, World Cup 26 edition: deep navy card, gold chip and stripe.
+      var big = size === 'lg';
+      var w = big ? 168 : 100, h = big ? 106 : 64;
+      var gid = 'anbg' + (++badgeSeq);
+      var cw = big ? 168 : size === 'sm' ? 30 : 56;
+      s = svg('svg', { viewBox: '0 0 ' + w + ' ' + h, width: cw, height: Math.round(cw * h / w), role: 'img', 'aria-label': 'ANB Visa Signature card' });
+      var defs = svg('defs'), lg = svg('linearGradient', { id: gid, x1: '0', y1: '0', x2: '1', y2: '1' });
+      lg.appendChild(svg('stop', { offset: '0', 'stop-color': '#13294B' }));
+      lg.appendChild(svg('stop', { offset: '1', 'stop-color': '#050B18' }));
+      defs.appendChild(lg); s.appendChild(defs);
+      s.appendChild(svg('rect', { x: 0, y: 0, width: w, height: h, rx: h * 0.12, fill: 'url(#' + gid + ')' }));
+      s.appendChild(svg('path', { d: 'M' + (w * 0.58) + ' 0 L' + (w * 0.72) + ' 0 L' + (w * 0.42) + ' ' + h + ' L' + (w * 0.28) + ' ' + h + ' Z', fill: '#C9A227', opacity: '0.28' }));
+      s.appendChild(svg('rect', { x: w * 0.09, y: h * 0.34, width: w * 0.16, height: h * 0.24, rx: h * 0.04, fill: '#D4AF37' }));
+      s.appendChild(txt(w * 0.82, h * (big ? 0.5 : 0.3), h * 0.2, 800, '#E8C766', 'ANB'));
+      if (big) {
+        s.appendChild(txt(w * 0.09, h * 0.2, 8, 600, '#FFFFFF', 'WORLD CUP 26 EDITION', { 'text-anchor': 'start', opacity: '0.8', 'letter-spacing': '0.6' }));
+        s.appendChild(txt(w * 0.09, h * 0.86, 9.5, 700, '#E8C766', 'VISA SIGNATURE', { 'text-anchor': 'start', 'letter-spacing': '1' }));
+      } else {
+        s.appendChild(txt(w * 0.88, h * 0.86, h * 0.17, 800, '#E8C766', 'VISA', { 'text-anchor': 'end', 'font-style': 'italic' }));
+      }
+    } else {
+      s = svg('svg', { viewBox: '0 0 48 48', width: px, height: px, role: 'img', 'aria-label': (walletNames[id] || id) + ' badge' });
+      s.appendChild(svg('rect', { x: 0, y: 0, width: 48, height: 48, rx: 12, fill: b.bg }));
+      if (b.bolt) {
+        s.appendChild(svg('path', { d: 'M27 6 L13 27 H23 L19 42 L35 19 H25 Z', fill: b.fg }));
+      } else {
+        s.appendChild(txt(24, b.top.length > 2 ? 26 : 28, b.top.length > 2 ? 17 : 22, 800, b.fg, b.top, { 'letter-spacing': '-0.5' }));
+        s.appendChild(txt(24, 40, 10, 600, b.fg, b.sub, { opacity: '0.85', 'letter-spacing': '0.5' }));
+      }
+    }
+    var wrap = el('span', 'wal-badge wal-badge-' + (size || 'md'));
+    wrap.setAttribute('aria-hidden', 'true');
+    wrap.appendChild(s);
+    return wrap;
+  }
+
   // The wallet automation empties wallet-texts.txt when it finds this on the clipboard, so texts the
   // app already has don't stay in a readable file. Clipboard writes need a tap, so this waits for one.
   var WALLET_DONE = '##WALLET-DONE##';
@@ -1135,10 +1194,12 @@
     clear(ul);
     v.wallets.forEach(function (w) {
       var li = el('li');
-      var b = el('button', 'wal-row');
+      var b = el('button', 'wal-row wal-c-' + w.id);
       b.type = 'button';
+      b.appendChild(walletBadge(w.id, 'md'));
       var left = el('span', 'wal-name');
       left.appendChild(el('b', null, w.name));
+      if (w.kind === 'card') left.appendChild(el('small', 'wal-edition', 'Visa Signature · World Cup 26'));
       var sub = [];
       if (!w.known) sub.push('Tap to enter the balance');
       else if (w.updated) sub.push('Updated ' + when(w.updated));
@@ -1150,7 +1211,7 @@
       if (!w.known) right.textContent = 'Set ›';
       else if (w.kind === 'card') {
         right.textContent = money(-w.balance);
-        if (w.available !== null) right.appendChild(el('small', 'muted', money(w.available) + ' available'));
+        if (w.available !== null) left.appendChild(el('small', 'muted', money(w.available) + ' available of ' + whole(w.limit)));
       } else right.textContent = money(w.balance);
       b.appendChild(right);
       b.addEventListener('click', function () { openWallet(w.id); });
@@ -1166,6 +1227,10 @@
     walletOpen = id;
     var isCard = w.kind === 'card';
     $('dlg-wallet-title').textContent = w.name;
+    var art = $('dlg-wallet-badge');
+    clear(art);
+    art.appendChild(walletBadge(id, 'lg'));
+    art.className = 'wal-art wal-c-' + id;
     $('dlg-wallet-balance').textContent = w.known ? (isCard ? money(-w.balance) + ' owed' : money(w.balance)) : 'No balance yet';
     var meta = [];
     if (w.start) meta.push('You set ' + money(isCard ? -w.start.amount : w.start.amount) + ' on ' + when(w.start.at));

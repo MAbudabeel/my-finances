@@ -365,3 +365,42 @@ td.num .tx-desc { text-align: right; }
 .dlg-sub { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin: 14px 0 4px; }
 #dlg-wallet textarea { margin-top: 8px; }
 @media (max-width: 400px) { .tab { font-size: 13px; padding: 9px 3px; } .tabs { gap: 2px; } }
+
+/* Wallet badges and colours */
+.wal-c-stcpay { --wal: #4F008C; }
+.wal-c-d360 { --wal: #00695C; }
+.wal-c-urpay { --wal: #D81B60; }
+.wal-c-barq { --wal: #FFB300; }
+.wal-c-anb { --wal: #B8901F; }
+.wal-badge { display: inline-flex; flex: none; line-height: 0; }
+.wal-badge svg { display: block; }
+.wal-badge-md svg { border-radius: 12px; box-shadow: 0 1px 3px rgba(15, 40, 90, .18); }
+.wal-badge-sm { vertical-align: -5px; margin-right: 6px; }
+.wal-badge-lg svg { border-radius: 10px; box-shadow: 0 4px 14px rgba(15, 40, 90, .25); }
+.wal-row { justify-content: flex-start; border-left: 4px solid var(--wal, transparent); padding-left: 10px; margin-left: -4px; }
+.wal-row .wal-name { flex: 1; }
+.wal-row .wal-badge { margin-right: 2px; }
+.wal-edition { color: var(--wal, var(--text-muted)); font-weight: 600 !important; }
+.wal-art { display: flex; justify-content: flex-start; margin-bottom: 10px; }
+.wal-art:empty { display: none; }
+.wal-art .wal-badge-lg svg { width: 64px; height: 64px; }
+.wal-art.wal-c-anb .wal-badge-lg svg { width: 168px; height: 106px; }
+#dlg-wallet h2 { color: var(--text); }
+.wal-big { font-size: clamp(17px, 5.6vw, 22px); white-space: nowrap; }
+.wal-row .wal-badge { width: 56px; justify-content: center; }
+@media (max-width: 400px) {
+  .wal-row { gap: 8px; }
+  .wal-row .wal-badge { width: 44px; }
+  .wal-row .wal-badge-md svg { width: 36px; height: 36px; }
+  .wal-c-anb .wal-badge-md svg { width: 44px; height: 28px; border-radius: 5px; }
+  .wal-amt { font-size: 15px; }
+}
+.wal-amt { max-width: 44%; text-align: right; }
+.wal-amt small { white-space: normal; }
+/* Row: badge | name + amount on one line, details underneath across the full width. */
+.wal-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
+.wal-row .wal-name { display: contents; }
+.wal-row .wal-badge { grid-column: 1; grid-row: 1 / span 4; align-self: center; }
+.wal-row .wal-name b { grid-column: 2; grid-row: 1; }
+.wal-row .wal-name small { grid-column: 2 / 4; }
+.wal-row .wal-amt { grid-column: 3; grid-row: 1; max-width: none; }
