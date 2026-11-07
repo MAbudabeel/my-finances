@@ -123,6 +123,7 @@
           </div>
         </section>
 
+        <p class="period-note muted small" id="period-note" hidden></p>
         <section class="kpis" aria-label="This month at a glance">
           <article class="kpi">
             <h2 class="kpi-label">Income</h2>
@@ -286,6 +287,12 @@
               </select>
             </label>
             <p class="muted small">It also locks when you leave the app for more than a minute.</p>
+            <label class="field"><span>Months</span>
+              <select id="month-mode">
+                <option value="payday">Payday to payday (salary on the 27th starts next month)</option>
+                <option value="calendar">Calendar months (1st to last day)</option>
+              </select>
+            </label>
             <label class="check"><input type="checkbox" id="autopaste"> <span>Add bank texts from the clipboard when I unlock (iOS asks you to tap Paste)</span></label>
             <div id="quick-box">
               <h3 class="sub-title">Quick unlock</h3>

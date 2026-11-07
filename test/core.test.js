@@ -204,7 +204,9 @@ test('incoming local transfer from an employer is salary income', async () => {
   const d = Core.emptyData();
   await Core.importTexts(d, sms);
   assert.equal(d.transactions[0].category, 'salary');
-  assert.equal(Core.monthSummary(d, '2026-09').salary, 18000);
+  assert.equal(Core.monthSummary(d, '2026-10').salary, 18000, 'paid on the 28th: counts for the next month');
+  d.meta.month_mode = 'calendar';
+  assert.equal(Core.monthSummary(d, '2026-09').salary, 18000, 'calendar months when chosen');
   // A small incoming transfer from a person stays a transfer.
   const p = Core.parseAlRajhiSms('حوالة محلية واردة بـSR 300\nلـ1234\nمن;AHMED\n1/11/26 10:00', { receivedAt: '2026-11-01T07:00:00Z' });
   assert.equal(Core.categorize({ ...p, amount: 30000 }).category, 'transfer');
@@ -424,4 +426,24 @@ test('statement PDF rows: layout grouping, types, names, and no double count wit
   assert.equal(by('Bank charges').category, 'bank_fees');
   assert.ok(d.transactions.some((t) => t.raw_category === 'loan_installment' && t.category === 'financing'));
   assert.equal(Core.importStatement(d, rows).inserted, 0);
+});
+
+test('pay months run from payday to the day before the next payday', async () => {
+  const d = Core.emptyData();
+  const sal = (dd, a) => `حوالة محلية واردة بـSR ${a}\nلـ1234\nمن;EMPLOYER COMPANY\n${dd} 09:00\n`;
+  const pos = (dd, a) => `شراء PoS\nعبر:1111;مدى\nبـSAR ${a}\nلـALBAIK 1\n${dd} 12:00\n`;
+  await Core.importTexts(d, [sal('28/9/26', 9000), sal('27/10/26', 9000), pos('27/9/26', 11), pos('28/9/26', 22), pos('26/10/26', 33), pos('27/10/26', 44), pos('5/11/26', 55)].join('\n'));
+  assert.equal(Core.periodOf(d, '2026-09-27'), '2026-09');
+  assert.equal(Core.periodOf(d, '2026-09-28'), '2026-10');
+  assert.equal(Core.periodOf(d, '2026-10-26'), '2026-10');
+  assert.equal(Core.periodOf(d, '2026-10-27'), '2026-11');
+  // No November salary yet: December is expected to start on the usual payday (median day 27 or 28).
+  assert.ok(['2026-11-27', '2026-11-28'].includes(Core.periodRange(d, '2026-12').start));
+  assert.deepEqual(Core.periodRange(d, '2026-10'), { start: '2026-09-28', end: '2026-10-26', payday: true });
+  assert.equal(Core.monthSummary(d, '2026-10').spending, 22 + 33);
+  assert.equal(Core.monthSummary(d, '2026-11').spending, 44 + 55);
+  assert.deepEqual(Core.monthsWithData(d), ['2026-09', '2026-10', '2026-11']);
+  d.meta.month_mode = 'calendar';
+  assert.equal(Core.periodOf(d, '2026-09-28'), '2026-09');
+  assert.equal(Core.periodRange(d, '2026-10').start, '2026-10-01');
 });

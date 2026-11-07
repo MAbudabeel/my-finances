@@ -757,13 +757,61 @@
   // ======================================================================
   // Summaries (same maths as backend/src/summary.js). Outputs SAR numbers.
   // ======================================================================
-  function inMonth(t, month) { return t.date.slice(0, 7) === month; }
+  // ----- Months: calendar months, or pay months (from one payday to the day before the next) -----
+  // A salary on the 15th or later starts the next month: paid 28 Nov -> "December" runs 28 Nov to the day before the December payday.
+  function monthMode(data) { return (data && data.meta && data.meta.month_mode) || 'payday'; }
+  function payStarts(data) {
+    if (!data || monthMode(data) !== 'payday') return null;
+    var starts = {}, days = [];
+    data.transactions.forEach(function (t) {
+      if (t.category !== 'salary' || t.amount <= 0 || !booked(t)) return;
+      var dom = Number(t.date.slice(8, 10));
+      var key = dom >= 15 ? shiftMonth(monthOf(t.date), 1) : monthOf(t.date);
+      if (!starts[key] || t.date < starts[key]) starts[key] = t.date;
+      if (dom >= 15) days.push(dom);
+    });
+    if (!Object.keys(starts).length) return null;
+    days.sort(function (a, b) { return a - b; });
+    var fallback = days.length ? days[Math.floor(days.length / 2)] : 27;
+    return { starts: starts, fallback: fallback };
+  }
+  function periodStart(ps, key) {
+    if (!ps) return key + '-01';
+    if (ps.starts[key]) return ps.starts[key];
+    var prev = shiftMonth(key, -1), last = Number(addDays(key + '-01', -1).slice(8, 10));
+    var d = Math.min(ps.fallback, last);
+    return prev + '-' + (d < 10 ? '0' : '') + d;
+  }
+  /** Returns day -> month key ("2026-12"), following the user's month setting. */
+  function periodFn(data) {
+    var ps = payStarts(data), memo = {};
+    return function (day) {
+      day = String(day).slice(0, 10);
+      if (memo[day]) return memo[day];
+      var key = day.slice(0, 7);
+      if (ps) {
+        var next = shiftMonth(key, 1);
+        if (day >= periodStart(ps, next)) key = next;
+        else if (day < periodStart(ps, key)) key = shiftMonth(key, -1);
+      }
+      memo[day] = key;
+      return key;
+    };
+  }
+  function periodOf(data, day) { return periodFn(data)(day); }
+  /** {start, end, payday} for a month key. */
+  function periodRange(data, key) {
+    var ps = payStarts(data);
+    if (!ps) return { start: key + '-01', end: addDays(addMonths(key + '-01', 1), -1), payday: false };
+    return { start: periodStart(ps, key), end: addDays(periodStart(ps, shiftMonth(key, 1)), -1), payday: true };
+  }
   function booked(t) { return t.booking_status !== 'pending'; }
 
   function monthSummary(data, month) {
     var income = 0, spending = 0, refunds = 0, salary = 0, subs = 0, count = 0, tin = 0, tout = 0;
+    var per = periodFn(data);
     data.transactions.forEach(function (t) {
-      if (!booked(t) || !inMonth(t, month)) return;
+      if (!booked(t) || per(t.date) !== month) return;
       if (t.category === 'transfer') { if (t.amount > 0) tin += t.amount; else tout -= t.amount; return; }
       count++;
       if (t.type === 'salary' || t.type === 'income') income += t.amount;
@@ -791,8 +839,9 @@
 
   function categoryBreakdown(data, month) {
     var sums = {}, counts = {};
+    var per = periodFn(data);
     data.transactions.forEach(function (t) {
-      if (!booked(t) || !inMonth(t, month) || t.category === 'transfer') return;
+      if (!booked(t) || per(t.date) !== month || t.category === 'transfer') return;
       if (['spending', 'subscription', 'refund'].indexOf(t.type) === -1) return;
       sums[t.category] = (sums[t.category] || 0) - t.amount;
       counts[t.category] = (counts[t.category] || 0) + (t.amount < 0 ? 1 : 0);
@@ -815,7 +864,8 @@
   }
 
   function transactionsOut(data, month) {
-    return data.transactions.filter(function (t) { return inMonth(t, month); }).map(function (t) {
+    var per = periodFn(data);
+    return data.transactions.filter(function (t) { return per(t.date) === month; }).map(function (t) {
       return {
         id: t.id, date: t.date, datetime: t.datetime, amount: toSar(t.amount), description: t.description, merchant: t.merchant,
         category: t.category, type: t.type, card_last4: t.card_last4,
@@ -825,8 +875,8 @@
   }
 
   function monthsWithData(data) {
-    var seen = {};
-    data.transactions.forEach(function (t) { seen[t.date.slice(0, 7)] = true; });
+    var seen = {}, per = periodFn(data);
+    data.transactions.forEach(function (t) { seen[per(t.date)] = true; });
     return Object.keys(seen).sort();
   }
 
@@ -852,12 +902,13 @@
 
   function salaryView(data, months) {
     months = months || 6;
-    var end = monthOf(today());
+    var per = periodFn(data);
+    var end = per(today());
     var detected = [];
     for (var i = months - 1; i >= 0; i--) {
       var month = shiftMonth(end, -i), total = 0, n = 0;
       data.transactions.forEach(function (t) {
-        if (t.category === 'salary' && t.amount > 0 && booked(t) && inMonth(t, month)) { total += t.amount; n++; }
+        if (t.category === 'salary' && t.amount > 0 && booked(t) && per(t.date) === month) { total += t.amount; n++; }
       });
       if (n) detected.push({ month: month, amount: toSar(total) });
     }
@@ -1068,7 +1119,7 @@
   return {
     statementRows: statementRows, statementTransaction: statementTransaction, importStatement: importStatement,
     // dates/money
-    toDay: toDay, today: today, monthOf: monthOf, isMonth: isMonth, shiftMonth: shiftMonth, monthRange: monthRange,
+    toDay: toDay, today: today, monthOf: monthOf, periodOf: periodOf, periodRange: periodRange, monthMode: monthMode, isMonth: isMonth, shiftMonth: shiftMonth, monthRange: monthRange,
     addDays: addDays, addMonths: addMonths, daysBetween: daysBetween, toHalalas: toHalalas, toSar: toSar,
     // parsing
     parseAlRajhiSms: parseAlRajhiSms, parseAmount: parseAmount, parseSmsDate: parseSmsDate, normDigits: normDigits,

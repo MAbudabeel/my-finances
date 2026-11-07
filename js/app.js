@@ -33,7 +33,7 @@
 
   // ---------- helpers ----------
   function pad(n) { return String(n).padStart(2, '0'); }
-  function currentMonth() { return Core.monthOf(Core.today()); }
+  function currentMonth() { return data ? Core.periodOf(data, Core.today()) : Core.monthOf(Core.today()); }
   function parseMonth(m) { var p = String(m).split('-'); return new Date(+p[0], +p[1] - 1, 1); }
   function parseDate(s) { var p = String(s).slice(0, 10).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
@@ -344,7 +344,15 @@
   }
 
   // ---------- KPIs ----------
+  var shortDay = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  function renderPeriodNote() {
+    var r = Core.periodRange(data, state.month), note = $('period-note');
+    note.hidden = !r.payday;
+    if (r.payday) note.textContent = 'Pay month: ' + shortDay.format(new Date(r.start + 'T00:00:00Z')) + ' to ' + shortDay.format(new Date(r.end + 'T00:00:00Z')) + ' (from payday)';
+  }
+
   function renderSummary(s) {
+    renderPeriodNote();
     var income = num(s.income), spending = num(s.spending), net = num(s.net);
     $('kpi-income').textContent = money(income);
     $('kpi-salary').textContent = num(s.salary) > 0 ? 'Salary ' + money(s.salary) : 'No salary yet this month';
@@ -993,6 +1001,7 @@
       renderQuick();
       $('autolock').value = String(settings.autolock);
       $('autopaste').checked = settings.autoPaste;
+      $('month-mode').value = Core.monthMode(data);
       Store.persisted().then(function (p) {
         $('persist-status').textContent = p
           ? 'This browser has agreed to keep the data (it won’t clear it to free space).'
@@ -1080,6 +1089,12 @@
     $('wipe-btn').addEventListener('click', function () { $('wipe-confirm').value = ''; $('wipe-go').disabled = true; openDialog('dlg-wipe'); });
     $('wipe-confirm').addEventListener('input', function () { $('wipe-go').disabled = $('wipe-confirm').value.trim().toUpperCase() !== 'DELETE'; });
     $('wipe-form').addEventListener('submit', onWipe);
+    $('month-mode').addEventListener('change', function () {
+      if (!data) return;
+      data.meta.month_mode = $('month-mode').value;
+      state.month = currentMonth();
+      persist(); renderAll();
+    });
     $('autopaste').addEventListener('change', function () { settings.autoPaste = $('autopaste').checked; saveSettings(); });
     $('autolock').addEventListener('change', function () { settings.autolock = Number($('autolock').value) || 5; saveSettings(); });
 

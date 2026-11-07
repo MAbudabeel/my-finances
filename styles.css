@@ -307,3 +307,4 @@ td.num .tx-desc { text-align: right; }
 .month-step:disabled { opacity: 0.35; cursor: default; }
 .month-picker label { flex: none; }
 .month-picker select { min-width: 7.5em; }
+.period-note { margin: 4px 2px 10px; }
