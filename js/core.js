@@ -1191,7 +1191,10 @@
   var W_AVAIL_KW = /(?:المتاح|الحد المتاح|الرصيد المتاح|available(?:\s*(?:credit|limit|balance))?)[^\d]{0,25}$/i;
   var W_OWED_KW = /(?:المستحق|المبلغ المستحق|الرصيد المستحق|outstanding|amount due|total due)[^\d]{0,25}$/i;
   var W_AMT_KW = /(?:بمبلغ|مبلغ|بقيمة|amount|شراء|purchase)[^\d]{0,25}$/i;
-  var W_WHO = /(?:^|[\s:،,])(لدى|عند|في|at|from|to|إلى|الى|لـ|من)\s*:?\s*([^\n]+?)(?=\s*(?:بمبلغ|مبلغ|بقيمة|المبلغ|الرصيد|رصيد|المتاح|balance|available|remaining|\bbal\b|\bcard\b|\*|بتاريخ|تاريخ|بطاقة|عبر|في\s+\d|on\s+\d|\d{1,4}[\/\-.]\d|SAR|SR|ر\.?\s?س|ريال|[.،,;]|$))/gim;
+  // ANB: "Total amount:SAR 190.42" is the purchase plus fees and VAT; that's what leaves the card.
+  var W_TOTAL_KW = /(?:total amount|المبلغ الإجمالي|المبلغ الاجمالي|الإجمالي|الاجمالي)[^\d]{0,25}$/i;
+  var W_FEE_KW = /(?:fees?(?: and vat)?|vat|رسوم|ضريبة)[^\d]{0,25}$/i;
+  var W_WHO = /(?:^|[\s:،,])(لدى|عند|في|at|from|to|إلى|الى|لـ|من)\s*:?\s*([^\n]+?)(?=\s*(?:بمبلغ|مبلغ|بقيمة|المبلغ|الرصيد|رصيد|المتاح|balance|available|remaining|\bbal\b|\bcard\b|\*|بتاريخ|تاريخ|بطاقة|عبر|في\s+\d|on\s+\d|\d{1,4}[\/\-.]\d|SAR|SR|ر\.?\s?س|ريال|\.(?=\s|$)|[،,;]|$))/gim;
   var W_NOT_WHO = /محفظت|حساب|بطاقت|بطاقة|wallet|account|\bcard\b|\byour\b|رصيد|^\W*$|^[\d*\s]+$/i;
   var W_DATE = /\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/;
 
@@ -1207,23 +1210,30 @@
     else W_RULES.forEach(function (r) { var m = t.match(r.re); if (m && m.index < at) { at = m.index; rule = r; } });
     if (!rule) return null;
 
-    var amount = null, balance = null, available = null, owed = null, m;
+    var amount = null, total = null, balance = null, available = null, owed = null, m;
     W_AMOUNT.lastIndex = 0;
     while ((m = W_AMOUNT.exec(t))) {
       var before = t.slice(Math.max(0, m.index - 40), m.index);
       var a = parseAmount(m[0]);
       if (!a) continue;
       // The label closest before the number decides what it is ("شحن رصيد بمبلغ 50" is an amount).
-      var labels = [[W_AVAIL_KW, 'available'], [W_OWED_KW, 'owed'], [W_BAL_KW, 'balance'], [W_AMT_KW, 'amount']].map(function (p) {
+      var labels = [[W_AVAIL_KW, 'available'], [W_OWED_KW, 'owed'], [W_BAL_KW, 'balance'], [W_TOTAL_KW, 'total'], [W_FEE_KW, 'fee'], [W_AMT_KW, 'amount']].map(function (p) {
         var mm = before.match(p[0]); return mm ? { kind: p[1], at: mm.index } : null;
       }).filter(Boolean).sort(function (x, y) { return y.at - x.at; });
       var kind = labels.length ? labels[0].kind : 'amount';
+      // "Total amount:" holds the word "amount" too; the longer label wins.
+      var tot = labels.find(function (l) { return l.kind === 'total'; });
+      if (kind === 'amount' && tot && labels[0].at >= tot.at) kind = 'total';
       if (kind === 'available' && available === null) available = a;
       else if (kind === 'owed' && owed === null) owed = a;
       else if (kind === 'balance' && balance === null) balance = a;
+      else if (kind === 'total' && total === null) total = a;
       else if (kind === 'amount' && !amount) amount = a;
     }
+    if (total && total.amount > 0) amount = total;
     if (!amount && (m = t.match(W_AMOUNT_BARE))) amount = { amount: toNumber(m[1]), currency: 'SAR' };
+    // On ANB card texts "Balance" is the credit still available: it goes down as you spend.
+    if (def.kind === 'card' && balance && available === null) { available = balance; balance = null; }
     if (!amount || !(amount.amount > 0)) return null;
 
     // Who: the shop for payments, the sender for money in.

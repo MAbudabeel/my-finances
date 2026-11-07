@@ -144,3 +144,29 @@ test('the done marker and emptied file are ignored', async () => {
   const r2 = await Core.importTexts(d, '-\n' + W('BARQ', 'Paid SAR 9.00 to ALI', AT(9, 0)));
   assert.equal(r2.inserted, 1);
 });
+
+// Real ANB card texts (card digits changed). "Balance" on these is the credit still available.
+const ANB_ALIEXPRESS = 'International Online Purchase\nApple Pay\nVISA Card:1111\nCountry:FRA\nAmount:SAR 186.14\nExchange rate:1.00\nFees and VAT:SAR 4.28\nBalance:SAR 3,941.03\nTotal amount:SAR 190.42\nAt:ALIEXPRESS.COM\nOn:07/11/26 18:43';
+const ANB_SMASCO = 'Online Purchase\nApple Pay\nVISA Card:1111\nAmount:SAR 80.49\nBalance:SAR 4,131.45\nAt:Smasco\nOn:07/11/26 18:36';
+
+test('real ANB texts: total with fees is the amount, Balance is available credit', () => {
+  const a = Core.parseWalletSms(ANB_ALIEXPRESS, 'anb', {});
+  assert.equal(a.amount, -190.42);
+  assert.equal(a.available_after, 3941.03);
+  assert.equal(a.balance_after, null);
+  assert.equal(a.merchant, 'ALIEXPRESS.COM');
+  assert.equal(a.card_last4, '1111');
+  assert.equal(a.date, '2026-11-07T18:43:00+03:00');
+  const b = Core.parseWalletSms(ANB_SMASCO, 'anb', {});
+  assert.equal(b.amount, -80.49); assert.equal(b.available_after, 4131.45); assert.equal(b.merchant, 'Smasco');
+});
+
+test('real ANB texts keep what you owe in line with the limit', async () => {
+  const d = Core.emptyData();
+  Core.setWalletStart(d, 'anb', 4211.94, { at: '2026-11-07T15:55:00+03:00', limit: 10000 });
+  await Core.importTexts(d, W('ANB', ANB_SMASCO, '2026-11-07T18:36:05+03:00') + W('ANB', ANB_ALIEXPRESS, '2026-11-07T18:43:05+03:00'));
+  const c = Core.walletsView(d).wallets.find((w) => w.id === 'anb');
+  assert.equal(c.available, 3941.03);
+  assert.equal(c.balance, -6058.97);
+  assert.equal(Core.monthSummary(d, Core.periodOf(d, '2026-11-07')).spending, 270.91);
+});
