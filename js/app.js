@@ -38,7 +38,9 @@
   function parseMonth(m) { var p = String(m).split('-'); return new Date(+p[0], +p[1] - 1, 1); }
   function parseDate(s) { var p = String(s).slice(0, 10).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
-  function money(v) { return sar.format(num(v)); }
+  // Privacy: every amount shows as stars while this is on (remembered on this phone).
+  var MASK = 'SAR ••••';
+  function money(v) { return settings.hideAmounts ? MASK : sar.format(num(v)); }
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -59,8 +61,8 @@
   function closeDialog(id) { var d = $(id); if (d.close) d.close(); else d.removeAttribute('open'); }
 
   function loadSettings() {
-    var s = { autolock: 5, autoPaste: true };
-    try { var raw = localStorage.getItem('finance-settings'); if (raw) { var p = JSON.parse(raw); if ([1, 5, 15].indexOf(p.autolock) !== -1) s.autolock = p.autolock; if (p.autoPaste === false) s.autoPaste = false; } } catch (e) { /* defaults */ }
+    var s = { autolock: 5, autoPaste: true, hideAmounts: false };
+    try { var raw = localStorage.getItem('finance-settings'); if (raw) { var p = JSON.parse(raw); if ([1, 5, 15].indexOf(p.autolock) !== -1) s.autolock = p.autolock; if (p.autoPaste === false) s.autoPaste = false; if (p.hideAmounts === true) s.hideAmounts = true; } } catch (e) { /* defaults */ }
     return s;
   }
   function saveSettings() { try { localStorage.setItem('finance-settings', JSON.stringify(settings)); } catch (e) { /* ignore */ } }
@@ -311,7 +313,24 @@
     showView();
   }
 
+  function applyPrivacy() {
+    var on = !!settings.hideAmounts, b = $('eye-btn');
+    document.body.classList.toggle('privacy', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-label', on ? 'Show amounts' : 'Hide amounts');
+    b.title = on ? 'Show amounts' : 'Hide amounts';
+  }
+  function togglePrivacy() {
+    settings.hideAmounts = !settings.hideAmounts;
+    saveSettings();
+    applyPrivacy();
+    if (!data) return;
+    renderAll();
+    if (salaryState.loaded) loadSalary(true);
+  }
+
   function renderAll() {
+    applyPrivacy();
     buildMonthOptions();
     updateMonthSteps();
     renderMonth();
@@ -401,7 +420,7 @@
     for (var v = 0; v <= top + 0.001; v += step) {
       s.appendChild(svg('line', { x1: padL, x2: W - padR, y1: y(v), y2: y(v), class: 'grid-line' }));
       var t = svg('text', { x: padL - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'axis-label' });
-      t.textContent = sarShort.format(v).replace('SAR', '').trim();
+      t.textContent = settings.hideAmounts ? '••' : sarShort.format(v).replace('SAR', '').trim();
       s.appendChild(t);
     }
     var tip = el('div', 'tooltip'); tip.hidden = true;
@@ -558,7 +577,7 @@
       var amt = num(t.amount);
       var label = (amt > 0 ? '+' : '') + money(amt);
       var a = el('td', 'num ' + (t.type === 'transfer' ? 'muted' : amt >= 0 ? 'pos' : ''), label);
-      if (t.original_currency) a.appendChild(el('span', 'tx-desc', t.original_currency + ' ' + num(t.original_amount).toFixed(2)));
+      if (t.original_currency) a.appendChild(el('span', 'tx-desc', t.original_currency + ' ' + (settings.hideAmounts ? '••••' : num(t.original_amount).toFixed(2))));
       tr.appendChild(a);
       body.appendChild(tr);
     });
@@ -600,7 +619,7 @@
     if (t.account) meta.push(walletNames[t.account]);
     if (t.card_last4) meta.push('card ··' + t.card_last4);
     if (t.link) meta.push('Moved between your own accounts (counted once)');
-    if (t.original_currency) meta.push(t.original_currency + ' ' + Core.toSar(t.original_amount).toFixed(2) + ' (SAR amount estimated)');
+    if (t.original_currency) meta.push(t.original_currency + ' ' + (settings.hideAmounts ? '••••' : Core.toSar(t.original_amount).toFixed(2)) + ' (SAR amount estimated)');
     $('dlg-tx-meta').textContent = meta.join(' · ');
     fillCategoryOptions($('dlg-tx-cat'), t.category);
     $('dlg-tx-remember').checked = false;
@@ -999,7 +1018,7 @@
   }
 
   // ---------- plan ----------
-  function whole(v) { return sarWhole.format(Math.round(num(v))); }
+  function whole(v) { return settings.hideAmounts ? MASK : sarWhole.format(Math.round(num(v))); }
   function utcDay(d) { return new Date(String(d).slice(0, 10) + 'T00:00:00Z'); }
   function planLabel(p) { return p.payday_mode ? 'until payday' : 'until month end'; }
 
@@ -1391,6 +1410,7 @@
     });
 
     $('shops-btn').addEventListener('click', openShops);
+    $('eye-btn').addEventListener('click', togglePrivacy);
     $('wal-paste').addEventListener('click', onWalletPaste);
     $('wallet-form').addEventListener('submit', saveWallet);
     $('dlg-wallet-add').addEventListener('click', addWalletText);

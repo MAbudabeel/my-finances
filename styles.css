@@ -404,3 +404,9 @@ td.num .tx-desc { text-align: right; }
 .wal-row .wal-name b { grid-column: 2; grid-row: 1; }
 .wal-row .wal-name small { grid-column: 2 / 4; }
 .wal-row .wal-amt { grid-column: 3; grid-row: 1; max-width: none; }
+
+/* Hide amounts */
+.eye-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding: 6px 10px; }
+.eye-btn .eye-off, .privacy .eye-btn .eye-on { display: none; }
+.privacy .eye-btn .eye-off { display: inline; }
+.privacy .pay-amount, .privacy #dlg-wallet-amount, .privacy #dlg-wallet-limit { -webkit-text-security: disc; text-security: disc; }
