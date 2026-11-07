@@ -354,3 +354,33 @@ test('file written by newer iOS: ##SMS## on the same line as the text, and one-l
   const r2 = await Core.importTexts(Core.emptyData(), '##SMS##' + samples[3][0].replace(/\n/g, ' ') + '##SMS##' + samples[4][0].replace(/\n/g, ' '));
   assert.equal(r2.inserted, 2, JSON.stringify(r2));
 });
+
+test('Saudi merchants: common PoS names land in the right category', () => {
+  const pos = (m) => Core.categorize({ merchant: m, amount: -1000, raw_category: 'pos_purchase' }).category;
+  assert.equal(pos('HYPER PANDA 123'), 'groceries');
+  assert.equal(pos('TAMWEENAT AL NOOR'), 'groceries');
+  assert.equal(pos('ALBAIK 0045'), 'dining');
+  assert.equal(pos('BARNS 11'), 'coffee');
+  assert.equal(pos('ALDREES 334'), 'fuel');
+  assert.equal(pos('NAJM INSURANCE'), 'car');
+  assert.equal(pos('NAHDI MEDICAL CO'), 'health');
+  assert.equal(pos('BARBER SHOP'), 'personal_care');
+  assert.equal(pos('IKEA RIYADH'), 'home');
+  assert.equal(pos('NOON.COM'), 'shopping');
+  // Short words only match whole words, and names don't trigger categories on transfers.
+  assert.equal(pos('القانون'), 'other');
+  assert.equal(pos('ZAINAB'), 'other');
+  assert.equal(Core.categorize({ merchant: 'Karim Ahmed', amount: -50000, raw_category: 'transfer_out' }).category, 'transfer');
+});
+
+test('saved transactions are re-sorted once after a keyword update, manual choices kept', async () => {
+  const d = Core.emptyData();
+  await Core.importTexts(d, 'شراء PoS\nعبر:1111;مدى\nبـSAR 50\nلـALDREES 1\n1/11/26 10:00\n\nشراء PoS\nعبر:1111;مدى\nبـSAR 9\nلـSHOP X\n1/11/26 11:00');
+  d.transactions[0].category = 'transport'; // as an older version filed it
+  Core.recategorize(d, d.transactions[1].id, 'dining', false);
+  d.meta.cat_version = 1;
+  assert.equal(Core.upgradeCategories(d), true);
+  assert.equal(d.transactions[0].category, 'fuel');
+  assert.equal(d.transactions[1].category, 'dining');
+  assert.equal(Core.upgradeCategories(d), false);
+});

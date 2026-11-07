@@ -267,10 +267,14 @@
     { id: 'groceries', label: 'Groceries', kind: 'spending' },
     { id: 'dining', label: 'Dining & delivery', kind: 'spending' },
     { id: 'coffee', label: 'Coffee', kind: 'spending' },
-    { id: 'transport', label: 'Transport & fuel', kind: 'spending' },
+    { id: 'fuel', label: 'Fuel', kind: 'spending' },
+    { id: 'transport', label: 'Rides & transport', kind: 'spending' },
+    { id: 'car', label: 'Car & maintenance', kind: 'spending' },
     { id: 'bills', label: 'Bills & utilities', kind: 'spending' },
     { id: 'subscriptions', label: 'Subscriptions', kind: 'spending' },
-    { id: 'shopping', label: 'Shopping', kind: 'spending' },
+    { id: 'shopping', label: 'Shopping & clothes', kind: 'spending' },
+    { id: 'home', label: 'Home & furniture', kind: 'spending' },
+    { id: 'personal_care', label: 'Personal care & beauty', kind: 'spending' },
     { id: 'health', label: 'Health & pharmacy', kind: 'spending' },
     { id: 'housing', label: 'Rent & housing', kind: 'spending' },
     { id: 'government', label: 'Government & fees', kind: 'spending' },
@@ -287,27 +291,32 @@
   var CATEGORY_IDS = {};
   CATEGORIES.forEach(function (c) { CATEGORY_IDS[c.id] = true; });
 
+  // First match wins, so the order matters: specific groups first, broad words ("market", "food", "mall") last.
   var BUILTIN = [
     ['salary', ['salary', 'payroll', 'راتب', 'رواتب', 'مسير', 'wps ']],
     ['refund', ['refund', 'reversal', 'استرداد', 'استرجاع', 'cashback']],
-    ['financing', ['tabby', 'تابي', 'tamara', 'تمارا', 'installment', 'قسط', 'تمويل', 'finance repayment', 'loan', 'mortgage', 'عقاري']],
-    ['housing', ['rent', 'إيجار', 'ايجار', 'ejar', 'real estate', 'عقار']],
-    ['charity', ['zakat', 'زكاة', 'ehsan', 'إحسان', 'charity', 'صدقة', 'donation', 'تبرع', 'jood']],
-    ['transfer', ['transfer', 'تحويل', 'حوالة', 'sarie', 'سريع', 'stc pay', 'stcpay', 'urpay', 'own account', 'internal transfer', 'credit card payment', 'سداد بطاقة']],
-    ['subscriptions', ['netflix', 'shahid', 'شاهد', 'spotify', 'anghami', 'أنغامي', 'osn', 'starzplay', 'starz play', 'disney', 'youtube premium', 'youtube', 'apple.com/bill', 'apple.com', 'itunes', 'icloud', 'google one', 'google storage', 'google *', 'amazon prime', 'primevideo', 'prime video', 'openai', 'chatgpt', 'anthropic', 'claude.ai', 'microsoft', 'xbox', 'playstation', 'psn', 'adobe', 'canva', 'dropbox', 'linkedin', 'fitness time', 'fitnesstime', 'وقت اللياقة', "gold's gym", 'golds gym', 'nuvola', 'tod tv', 'beinsports', 'bein', 'audible', 'kindle unl']],
-    ['bills', ['saudi electricity', 'الكهرباء', 'كهرباء', 'مياه', 'sec bill', 'national water', 'المياه', 'nwc', 'stc', 'mobily', 'موبايلي', 'zain', 'زين', 'virgin mobile', 'lebara', 'salam mobile', 'sawa', 'jawwy', 'سداد فاتورة', 'bill payment', 'sadad bill']],
-    ['government', ['absher', 'أبشر', 'moi', 'وزارة الداخلية', 'muqeem', 'مقيم', 'traffic', 'مخالفة', 'المرور', 'passport', 'الجوازات', 'iqama', 'إقامة', 'balady', 'بلدي', 'najiz', 'ناجز', 'zatca', 'gosi', 'sadad moi', 'government']],
+    ['financing', ['tabby', 'تابي', 'tamara', 'تمارا', 'installment', 'قسط', 'تمويل', 'finance repayment', 'loan', 'mortgage', 'عقاري', 'emkan', 'امكان', 'nayifat', 'النايفات', 'tamam', 'تمام', 'spotii', 'postpay', 'mispay']],
+    ['housing', ['rent', 'إيجار', 'ايجار', 'ejar', 'real estate', 'عقار', 'sakani', 'سكني', 'owners association', 'اتحاد ملاك']],
+    ['charity', ['zakat', 'زكاة', 'ehsan', 'إحسان', 'charity', 'صدقة', 'donation', 'تبرع', 'jood', 'خيرية', 'خيري', 'kafalah', 'كفالة', 'waqf', 'وقف']],
+    ['transfer', ['transfer', 'تحويل', 'حوالة', 'sarie', 'سريع', 'stc pay', 'stcpay', 'stc bank', 'urpay', 'own account', 'internal transfer', 'credit card payment', 'سداد بطاقة', 'barq', 'برق', 'alinma pay', 'd360', 'wise']],
+    ['subscriptions', ['netflix', 'shahid', 'شاهد', 'spotify', 'anghami', 'أنغامي', 'osn', 'starzplay', 'starz play', 'disney', 'youtube premium', 'youtube', 'apple.com/bill', 'apple.com', 'itunes', 'icloud', 'apple music', 'google one', 'google storage', 'google *', 'google play', 'amazon prime', 'primevideo', 'prime video', 'openai', 'chatgpt', 'anthropic', 'claude.ai', 'perplexity', 'midjourney', 'github', 'notion', 'grammarly', 'zoom.us', 'microsoft', 'xbox', 'playstation', 'psn', 'nintendo', 'adobe', 'canva', 'dropbox', 'linkedin', 'duolingo', 'crunchyroll', 'weyyak', 'tod tv', 'stc tv', 'jawwy tv', 'beinsports', 'bein', 'audible', 'kindle unl', 'snapchat', 'nordvpn', 'expressvpn', 'surfshark', 'fitness time', 'fitnesstime', 'وقت اللياقة', "gold's gym", 'golds gym', 'leejam', 'لجام', 'nuvola', 'armah', 'body masters', 'gym', 'نادي رياضي']],
+    ['bills', ['saudi electricity', 'الكهرباء', 'كهرباء', 'مياه', 'sec bill', 'national water', 'المياه', 'nwc', 'stc', 'mobily', 'موبايلي', 'zain', 'زين', 'virgin mobile', 'lebara', 'salam mobile', 'friendi', 'redbull mobile', 'yaqoot', 'sawa', 'jawwy', 'internet', 'fiber', 'سداد فاتورة', 'bill payment', 'sadad bill', 'فاتورة']],
+    ['government', ['absher', 'أبشر', 'moi', 'وزارة الداخلية', 'muqeem', 'مقيم', 'traffic', 'مخالفة', 'المرور', 'passport', 'الجوازات', 'jawazat', 'iqama', 'إقامة', 'balady', 'بلدي', 'بلدية', 'amanah', 'أمانة', 'municipality', 'najiz', 'ناجز', 'محكمة', 'zatca', 'gosi', 'qiwa', 'قوى', 'musaned', 'مساند', 'efaa', 'إيفاء', 'enjaz', 'tasheel', 'تسهيل', 'chamber of commerce', 'الغرفة التجارية', 'sadad moi', 'government', 'حكومي', 'ministry', 'وزارة']],
     ['cash', ['atm', 'cash withdrawal', 'سحب نقدي', 'سحب']],
-    ['bank_fees', ['fee', 'رسوم', 'commission', 'عمولة', 'vat on fee', 'annual fee']],
-    ['groceries', ['panda', 'بنده', 'danube', 'الدانوب', 'tamimi', 'التميمي', 'othaim', 'العثيم', 'carrefour', 'كارفور', 'lulu', 'لولو', 'nesto', 'bindawood', 'بن داود', 'farm superstores', 'المزرعة', 'manuel', 'hyper', 'هايبر', 'supermarket', 'سوبرماركت', 'grocery', 'ninja', 'نينجا', 'nana', 'نعناع', 'baqala', 'بقالة', 'tamimi markets']],
-    ['coffee', ['starbucks', 'ستاربكس', 'dunkin', 'tim hortons', 'barns', 'بارنز', 'half million', 'كوفي', 'coffee', 'cafe', 'café', 'dr.cafe', 'dr cafe', 'costa', 'caribou', 'brew92', 'overdose']],
-    ['dining', ['albaik', 'al baik', 'البيك', 'kudu', 'كودو', 'herfy', 'هرفي', 'mcdonald', 'ماكدونالدز', 'burger king', 'kfc', 'pizza', 'بيتزا', 'shawarma', 'شاورما', 'restaurant', 'مطعم', 'hungerstation', 'هنقرستيشن', 'jahez', 'جاهز', 'mrsool', 'مرسول', 'toyou', 'to you', 'keeta', 'كيتا', 'the chefz', 'chefz', 'careem food', 'talabat', 'shake shack', 'five guys', 'maestro', 'domino', 'subway', 'hardee', 'texas chicken', 'romansiah', 'الرومانسية']],
-    ['transport', ['uber', 'careem', 'كريم', 'bolt', 'jeeny', 'جيني', 'aldrees', 'الدريس', 'sasco', 'ساسكو', 'petromin', 'بترومين', 'naft', 'نفط', 'fuel', 'petrol', 'بنزين', 'محطة', 'station', 'parking', 'مواقف', 'saptco', 'سابتكو', 'riyadh metro', 'darb', 'najm', 'نجم', 'car wash', 'tasjeel', 'yelo', 'theeb', 'budget rent', 'lumi', 'salik']],
-    ['travel', ['saudia', 'السعودية للطيران', 'flynas', 'طيران ناس', 'flyadeal', 'طيران أديل', 'emirates', 'qatar airways', 'booking.com', 'agoda', 'airbnb', 'almosafer', 'المسافر', 'flyin', 'hotel', 'فندق', 'marriott', 'hilton', 'sar railway', 'haramain', 'قطار']],
-    ['health', ['nahdi', 'النهدي', 'dawaa', 'الدواء', 'pharmacy', 'صيدلية', 'hospital', 'مستشفى', 'clinic', 'عيادة', 'medical', 'طبي', 'dental', 'أسنان', 'sulaiman al habib', 'الحبيب', 'dallah', 'مستوصف', 'tawuniya', 'bupa', 'بوبا', 'medgulf']],
-    ['education', ['school', 'مدرسة', 'university', 'جامعة', 'academy', 'أكاديمية', 'course', 'udemy', 'coursera', 'tuition']],
-    ['entertainment', ['cinema', 'vox', 'muvi', 'amc', 'سينما', 'webook', 'boulevard', 'بوليفارد', 'riyadh season', 'موسم', 'steam', 'game']],
-    ['shopping', ['amazon', 'أمازون', 'noon', 'نون', 'namshi', 'نمشي', 'jarir', 'جرير', 'extra', 'اكسترا', 'ikea', 'ايكيا', 'shein', 'شي ان', 'centrepoint', 'centerpoint', 'h&m', 'zara', 'max fashion', 'redtag', 'red tag', 'sephora', 'nice one', 'نايس ون', 'golden scent', 'aliexpress', 'temu', 'apple store', 'virgin megastore', 'saco', 'ساكو', 'home centre', 'homecentre', 'mall', 'مول']]
+    ['bank_fees', ['fee', 'fees', 'رسوم', 'commission', 'عمولة', 'vat on fee', 'annual fee']],
+    ['groceries', ['panda', 'بنده', 'danube', 'الدانوب', 'tamimi', 'التميمي', 'othaim', 'العثيم', 'carrefour', 'كارفور', 'lulu', 'لولو', 'nesto', 'bindawood', 'bin dawood', 'بن داود', 'farm superstores', 'المزرعة', 'al raya', 'alraya', 'الراية', 'al sadhan', 'السدحان', 'manuel', 'spar', 'hyper', 'هايبر', 'supermarket', 'super market', 'سوبرماركت', 'سوبر ماركت', 'mini market', 'minimarket', 'market', 'ماركت', 'aswaq', 'أسواق', 'tamweenat', 'tamwinat', 'تموينات', 'baqala', 'baqalah', 'bakala', 'bqala', 'بقالة', 'بقاله', 'foodstuff', 'food stuff', 'مواد غذائية', 'grocery', 'groceries', 'ninja', 'نينجا', 'nana', 'نعناع', 'butcher', 'ملحمة', 'لحوم', 'خضار', 'فواكه', 'vegetable', 'تمور', 'nova water', 'berain', 'بيرين', 'water delivery']],
+    ['coffee', ['starbucks', 'ستاربكس', 'dunkin', 'tim hortons', 'barns', 'بارنز', 'half million', 'كوفي', 'coffee', 'cafe', 'café', 'كافيه', 'قهوة', 'محمصة', 'roaster', 'roastery', 'dr.cafe', 'dr cafe', 'costa', 'caribou', 'brew92', 'brew 92', 'overdose', 'arabica', 'joffee', 'dose', 'kyan', 'elixir bunn', 'camel step', 'specialty', 'espresso', 'krispy kreme']],
+    ['dining', ['albaik', 'al baik', 'البيك', 'kudu', 'كودو', 'herfy', 'هرفي', 'mcdonald', 'ماكدونالدز', 'burger king', 'kfc', 'popeyes', 'hardee', 'texas chicken', 'pizza', 'بيتزا', 'papa john', 'little caesar', 'domino', 'subway', 'shake shack', 'five guys', 'maestro', 'shawarma', 'شاورما', 'shawarmer', 'شاورمر', 'mama noura', 'ماما نورة', 'al tazaj', 'الطازج', 'romansiah', 'الرومانسية', 'najd village', 'قرية نجد', 'burgerizzr', 'burger', 'برجر', 'chicken', 'broast', 'بروست', 'grill', 'مشويات', 'steak', 'mandi', 'مندي', 'kabsa', 'كبسة', 'restaurant', 'resturant', 'مطعم', 'مطاعم', 'mataam', 'matam', 'مطبخ', 'kitchen', 'buffet', 'بوفيه', 'بوفية', 'bakery', 'مخبز', 'مخابز', 'sweets', 'حلويات', 'dessert', 'ice cream', 'baskin', 'cinnabon', 'hungerstation', 'hungerst', 'هنقرستيشن', 'jahez', 'جاهز', 'mrsool', 'مرسول', 'toyou', 'to you', 'keeta', 'كيتا', 'the chefz', 'chefz', 'careem food', 'talabat', 'food']],
+    ['fuel', ['aldrees', 'al drees', 'الدريس', 'sasco', 'ساسكو', 'petromin', 'بترومين', 'naft', 'نفط', 'fuel', 'وقود', 'petrol', 'بنزين', 'gasoline', 'gas station', 'محطة', 'mahatta', 'mahattat', 'محطات']],
+    ['car', ['najm', 'نجم', 'car wash', 'carwash', 'غسيل سيارات', 'مغسلة سيارات', 'car service', 'oil change', 'تغيير زيت', 'زيوت', 'tire', 'tyre', 'كفرات', 'إطارات', 'spare parts', 'auto parts', 'قطع غيار', 'workshop', 'ورشة', 'mvpi', 'فحص دوري', 'tameeni', 'تأميني', 'bcare', 'abdul latif jameel', 'jameel motors', 'toyota', 'hyundai', 'nissan', 'lexus', 'kia', 'honda', 'chevrolet', 'gmc', 'mazda', 'tasjeel']],
+    ['transport', ['uber', 'careem', 'كريم', 'bolt', 'jeeny', 'جيني', 'saptco', 'سابتكو', 'riyadh metro', 'metro', 'riyadh bus', 'darb', 'parking', 'مواقف', 'mawaqif', 'yelo', 'theeb', 'ذيب', 'budget rent', 'lumi', 'key car', 'hanco', 'rent a car', 'تأجير سيارات', 'salik', 'toll']],
+    ['travel', ['saudia', 'السعودية للطيران', 'riyadh air', 'flynas', 'طيران ناس', 'flyadeal', 'طيران أديل', 'flydubai', 'emirates', 'etihad', 'qatar airways', 'gulf air', 'turkish airlines', 'egyptair', 'airline', 'airways', 'booking.com', 'agoda', 'expedia', 'trip.com', 'airbnb', 'almosafer', 'المسافر', 'tajawal', 'wego', 'rehlat', 'flyin', 'gathern', 'جاذر', 'hotel', 'فندق', 'resort', 'منتجع', 'chalet', 'شاليه', 'marriott', 'hilton', 'hyatt', 'radisson', 'novotel', 'ibis', 'movenpick', 'intercontinental', 'holiday inn', 'sar railway', 'haramain', 'قطار', 'nusuk', 'نسك', 'umrah', 'عمرة', 'duty free']],
+    ['health', ['nahdi', 'النهدي', 'dawaa', 'الدواء', 'whites', 'pharmacy', 'pharmacies', 'pharma', 'صيدلية', 'صيدليات', 'hospital', 'مستشفى', 'clinic', 'clinics', 'عيادة', 'عيادات', 'medical', 'طبي', 'طبية', 'dental', 'أسنان', 'sulaiman al habib', 'hmg', 'الحبيب', 'dallah', 'mouwasat', 'المواساة', 'saudi german', 'مستوصف', 'polyclinic', 'laboratory', 'lab', 'مختبر', 'optic', 'optics', 'نظارات', 'magrabi', 'المغربي', 'tawuniya', 'bupa', 'بوبا', 'medgulf']],
+    ['personal_care', ['barber', 'barbershop', 'حلاق', 'حلاقة', 'salon', 'صالون', 'مشغل', 'beauty', 'تجميل', 'laundry', 'مغسلة', 'مصبغة', 'dry clean', 'perfume', 'perfumes', 'عطور', 'oud', 'عود', 'arabian oud', 'العربية للعود', 'qurashi', 'القرشي', 'ajmal', 'rasasi', 'الرصاصي', 'sephora', 'nice one', 'نايس ون', 'golden scent', 'faces', 'وجوه', 'bath & body', 'cosmetic', 'cosmetics', 'spa']],
+    ['education', ['school', 'schools', 'مدرسة', 'مدارس', 'university', 'جامعة', 'academy', 'أكاديمية', 'institute', 'معهد', 'kindergarten', 'nursery', 'حضانة', 'روضة', 'course', 'udemy', 'coursera', 'tuition', 'training', 'تدريب']],
+    ['entertainment', ['cinema', 'cinemas', 'vox', 'muvi', 'amc', 'reel cinemas', 'سينما', 'webook', 'tazkarti', 'boulevard', 'بوليفارد', 'riyadh season', 'موسم', 'qiddiya', 'sparkys', 'snow city', 'bowling', 'escape room', 'theme park', 'steam', 'midasbuy', 'razer gold', 'pubg', 'game', 'games']],
+    ['home', ['ikea', 'ايكيا', 'home centre', 'homecentre', 'home center', 'saco', 'ساكو', 'ace hardware', 'abyat', 'أبيات', 'pan emirates', 'homes r us', 'al muhaidib', 'المهيدب', 'furniture', 'أثاث', 'مفروشات', 'hardware', 'أدوات منزلية', 'household', 'carpet', 'سجاد', 'mattress', 'مراتب', 'lighting', 'إنارة', 'cleaning', 'تنظيف', 'سباكة']],
+    ['shopping', ['amazon', 'أمازون', 'noon', 'نون', 'namshi', 'نمشي', 'trendyol', 'ounass', 'styli', 'sivvi', 'jarir', 'جرير', 'extra', 'اكسترا', 'shein', 'شي ان', 'centrepoint', 'centerpoint', 'h&m', 'zara', 'bershka', 'lefties', 'max fashion', 'redtag', 'red tag', 'splash', 'lc waikiki', 'defacto', 'nike', 'adidas', 'sun & sand', 'sun and sand', 'decathlon', 'toys r us', 'hamleys', 'mothercare', 'babyshop', 'aliexpress', 'temu', 'apple store', 'virgin megastore', 'blackbox', 'black box', 'mall', 'مول', 'store', 'متجر', 'boutique', 'fashion', 'أزياء', 'ملابس', 'عبايات', 'abaya']]
   ];
   var EMPLOYER_RE = /(company|\bco\b|corp|\bltd\b|limited|\best\b|establishment|group|holding|ministry|شركة|مؤسسة|مجموعة|وزارة|هيئة)/i;
   var HINTS = { own_transfer: 'transfer', transfer_in: 'transfer', transfer_out: 'transfer', card_payment: 'transfer', fee: 'bank_fees', bill_payment: 'bills' };
@@ -319,12 +328,22 @@
       .replace(/\s+/g, ' ').trim();
   }
   var COMPILED = BUILTIN.map(function (g) { return [g[0], g[1].map(normalizeText)]; });
+  // Short words must stand alone ("zain" not in "zainab", "نون" not in "قانون"). An Arabic word may
+  // carry ال / و / ب / ل in front, and endings like ات.
+  var SHORT_RE = {};
   function matches(hay, needle) {
     if (needle.length <= 4 && /^[a-z0-9.]+$/.test(needle)) {
-      return new RegExp('(^|[^a-z0-9])' + needle.replace(/\./g, '\\.') + '([^a-z0-9]|$)').test(hay);
+      if (!SHORT_RE[needle]) SHORT_RE[needle] = new RegExp('(^|[^a-z0-9])' + needle.replace(/\./g, '\\.') + '([^a-z0-9]|$)');
+      return SHORT_RE[needle].test(hay);
+    }
+    if (needle.length <= 4 && /^[\u0621-\u064a]+$/.test(needle)) {
+      if (!SHORT_RE[needle]) SHORT_RE[needle] = new RegExp('(^|[^\u0621-\u064a])(?:و|ب|ل|ف)?(?:ال|لل)?' + needle);
+      return SHORT_RE[needle].test(hay);
     }
     return hay.indexOf(needle) !== -1;
   }
+  // Keywords that are also people's names: ignored for transfers to or from a person.
+  var NAME_LIKE = ['كريم', 'zain', 'زين', 'نجم', 'najm', 'تمام', 'tamam', 'جيني', 'ذيب', 'theeb', 'jood', 'kia', 'dose', 'برق', 'barq', 'امكان', 'نون', 'noon', 'lulu', 'لولو', 'nana', 'jameel', 'whites', 'amc'].map(normalizeText);
 
   /** t.amount in halalas. Returns {category, source}. */
   function categorize(t, userRules) {
@@ -340,16 +359,17 @@
     if (hint === 'transfer_in' && isCredit && t.merchant) {
       var who = normalizeText(t.merchant);
       for (var k = 0; k < COMPILED.length; k++) {
-        if (['transfer', 'salary', 'refund', 'financing', 'housing', 'charity'].indexOf(COMPILED[k][0]) !== -1) continue;
-        if (COMPILED[k][1].some(function (w) { return matches(who, w); })) return { category: COMPILED[k][0], source: 'auto' };
+        if (['transfer', 'salary', 'refund', 'financing', 'housing', 'charity', 'government', 'bank_fees', 'cash'].indexOf(COMPILED[k][0]) !== -1) continue;
+        if (COMPILED[k][1].some(function (w) { return NAME_LIKE.indexOf(w) === -1 && matches(who, w); })) return { category: COMPILED[k][0], source: 'auto' };
       }
     }
     if (hint === 'transfer_in' && t.amount >= 150000 && EMPLOYER_RE.test(text)) return { category: 'salary', source: 'auto' };
     if (hint === 'atm_withdrawal' && !isCredit) return { category: 'cash', source: 'auto' };
     if (hint === 'card_payment' || hint === 'own_transfer') return { category: 'transfer', source: 'auto' };
+    var person = hint === 'transfer_out' || hint === 'transfer_in';
     for (var j = 0; j < COMPILED.length; j++) {
       var cat = COMPILED[j][0], words = COMPILED[j][1];
-      if (!words.some(function (w) { return matches(text, w); })) continue;
+      if (!words.some(function (w) { return !(person && NAME_LIKE.indexOf(w) !== -1) && matches(text, w); })) continue;
       if ((cat === 'salary' || cat === 'refund') && !isCredit) continue;
       return { category: cat, source: 'auto' };
     }
@@ -381,7 +401,7 @@
       rules: [],
       salary: null,
       next_id: 1,
-      meta: { created_at: new Date().toISOString(), last_import_at: null, last_backup_at: null }
+      meta: { created_at: new Date().toISOString(), last_import_at: null, last_backup_at: null, cat_version: CAT_VERSION }
     };
   }
 
@@ -517,6 +537,17 @@
     detect(data);
   }
 
+  // Bump when the built-in keywords change, so saved transactions are sorted again with the new list.
+  var CAT_VERSION = 2;
+  /** Re-sort auto-categorized transactions once after an update. Manual choices and rules are kept. Returns true if it ran. */
+  function upgradeCategories(data) {
+    if ((data.meta && data.meta.cat_version) === CAT_VERSION) return false;
+    recategorizeAll(data);
+    data.meta = data.meta || {};
+    data.meta.cat_version = CAT_VERSION;
+    return true;
+  }
+
   function deleteTransaction(data, id) {
     var i = data.transactions.findIndex(function (x) { return x.id === id; });
     if (i === -1) throw new Error('not found');
@@ -528,7 +559,7 @@
   // Subscriptions & salary detection (same rules as backend/src/subscriptions.js)
   // ======================================================================
   var SUBSCRIPTION_KINDS = { subscriptions: 1, bills: 1, entertainment: 1, education: 1 };
-  var NOT_RECURRING = { groceries: 1, dining: 1, coffee: 1, transport: 1, cash: 1, transfer: 1, shopping: 1, refund: 1, travel: 1, health: 1 };
+  var NOT_RECURRING = { groceries: 1, dining: 1, coffee: 1, transport: 1, fuel: 1, home: 1, personal_care: 1, cash: 1, transfer: 1, shopping: 1, refund: 1, travel: 1, health: 1 };
   var NOISE = ['pos purchase', 'online purchase', 'purchase', 'pos', 'e-commerce', 'ecommerce', 'apple pay', 'mada pay',
     'mada', 'visa', 'mastercard', 'debit card', 'credit card', 'card', 'payment', 'sadad', 'شراء عبر الانترنت',
     'شراء عبر نقاط البيع', 'شراء انترنت', 'شراء', 'نقاط البيع', 'مدى', 'دفع', 'سداد'].map(normalizeText);
@@ -876,7 +907,7 @@
     // data
     CATEGORIES: CATEGORIES, categorize: categorize, typeFor: typeFor, normalizeText: normalizeText,
     emptyData: emptyData, validateData: validateData, importTransactions: importTransactions,
-    recategorize: recategorize, recategorizeAll: recategorizeAll, deleteTransaction: deleteTransaction,
+    recategorize: recategorize, recategorizeAll: recategorizeAll, upgradeCategories: upgradeCategories, CAT_VERSION: CAT_VERSION, deleteTransaction: deleteTransaction,
     detect: detect, merchantKey: merchantKey, monthlyEquivalent: monthlyEquivalent, setSubscriptionStatus: setSubscriptionStatus,
     // views
     monthSummary: monthSummary, monthlyTrend: monthlyTrend, categoryBreakdown: categoryBreakdown,

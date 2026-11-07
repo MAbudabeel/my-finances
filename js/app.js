@@ -141,11 +141,13 @@
     Store.unlock(p).then(function (r) {
       session = r.session;
       data = Core.validateData(r.data);
+      var resorted = Core.upgradeCategories(data);
       lockState = { failed: 0, waitUntil: 0 }; saveLockState();
       $('lock-pass').value = '';
       showFormError('lock-error', '');
       Store.persist();
       enterApp();
+      if (resorted) persist();
       clip.then(autoImport);
     }).catch(function (err) {
       $('lock-pass').value = '';
