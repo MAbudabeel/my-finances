@@ -345,3 +345,23 @@ td.num .tx-desc { text-align: right; }
 .plan-cats { margin-top: 12px; }
 .plan-cats .plan-up { color: var(--negative); font-size: 12px; margin-left: 6px; font-weight: 500; }
 .plan-cats .plan-down { color: var(--positive); font-size: 12px; margin-left: 6px; font-weight: 500; }
+
+/* Wallets & credit card */
+.wal-hero { background: linear-gradient(140deg, var(--accent-deep), var(--accent)); color: #fff; border: 0; }
+.wal-twin { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.wal-twin > div { min-width: 0; }
+.wal-big { font-size: 22px; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.wal-list, .wal-recent { list-style: none; margin: 0; padding: 0; }
+.wal-list li { border-bottom: 1px solid var(--border); }
+.wal-list li:last-child { border-bottom: 0; }
+.wal-row { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; font: inherit; color: inherit; text-align: left; background: none; border: 0; cursor: pointer; min-height: 52px; }
+.wal-name { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.wal-name small, .wal-amt small { font-size: 12px; font-weight: 400; }
+.wal-amt { display: flex; flex-direction: column; align-items: flex-end; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wal-amt.pos { color: var(--positive, #15803d); }
+.wal-owe { color: var(--text); }
+.wal-recent li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.wal-recent li.empty { display: block; padding: 12px 0; }
+.dlg-sub { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin: 14px 0 4px; }
+#dlg-wallet textarea { margin-top: 8px; }
+@media (max-width: 400px) { .tab { font-size: 13px; padding: 9px 3px; } .tabs { gap: 2px; } }

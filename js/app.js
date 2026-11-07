@@ -320,6 +320,7 @@
     renderShopsBanner();
     renderBackupStatus();
     renderPlan();
+    renderWallets();
     if (window.location.hash === '#salary') loadSalary(true);
   }
 
@@ -544,7 +545,8 @@
       var open = el('button', 'tx-open');
       open.type = 'button';
       open.appendChild(el('span', 'tx-merchant', t.merchant || t.description || 'Unknown'));
-      if (t.description && t.description !== t.merchant) open.appendChild(el('span', 'tx-desc', t.description));
+      var desc = [t.account ? walletNames[t.account] : null, t.link ? 'between your accounts' : (t.description !== t.merchant ? t.description : null)].filter(Boolean).join(' · ');
+      if (desc) open.appendChild(el('span', 'tx-desc', desc));
       open.addEventListener('click', function () { openTx(t.id); });
       m.appendChild(open);
       tr.appendChild(m);
@@ -593,7 +595,9 @@
     $('dlg-tx-amount').textContent = (amt > 0 ? '+' : '') + money(amt);
     var meta = [dayYearFmt.format(parseDate(t.date))];
     if (t.datetime && t.datetime.length > 15) meta.push(t.datetime.slice(11, 16));
+    if (t.account) meta.push(walletNames[t.account]);
     if (t.card_last4) meta.push('card ··' + t.card_last4);
+    if (t.link) meta.push('Moved between your own accounts (counted once)');
     if (t.original_currency) meta.push(t.original_currency + ' ' + Core.toSar(t.original_amount).toFixed(2) + ' (SAR amount estimated)');
     $('dlg-tx-meta').textContent = meta.join(' · ');
     fillCategoryOptions($('dlg-tx-cat'), t.category);
@@ -664,6 +668,7 @@
       box.textContent = parts.join(' ');
       box.dataset.tone = r.inserted ? 'good' : '';
       box.hidden = false;
+      if (r.unread && !r.inserted) persist();
       if (r.inserted) {
         // Jump to the month of the newest transaction added.
         state.month = currentMonth();
@@ -675,10 +680,12 @@
   }
 
   // Texts found on the clipboard at unlock: add them quietly, report only when something is new.
-  var BANK_HINT = /##SMS##|بـ|مبلغ|سحب|القسط/;
+  var BANK_HINT = /##SMS##|##WALLET:|بـ|مبلغ|سحب|القسط/;
   function autoImport(text) {
     if (!text || !BANK_HINT.test(text) || text.length > 2000000) return;
     Core.importTexts(data, text).then(function (r) {
+      if (r.wallet_texts) markWalletDone();
+      if (r.unread) persist();
       if (!r.inserted) return;
       var box = $('import-result');
       box.textContent = 'Added ' + r.inserted + ' new transaction' + (r.inserted === 1 ? '' : 's') + ' from your bank texts.';
@@ -693,7 +700,8 @@
     navigator.clipboard.readText().then(function (text) {
       return addTexts(text).then(function (r) {
         // Don't leave bank texts sitting on the clipboard.
-        if (r && (r.inserted || r.duplicates) && navigator.clipboard.writeText) navigator.clipboard.writeText('').catch(function () {});
+        if (r && r.wallet_texts) markWalletDone();
+        else if (r && (r.inserted || r.duplicates) && navigator.clipboard.writeText) navigator.clipboard.writeText('').catch(function () {});
       });
     }).catch(function (err) {
       console.warn(err);
@@ -1089,11 +1097,172 @@
     });
   }
 
+  // ---------- wallets & credit card ----------
+  var walletNames = {};
+  Core.WALLETS.forEach(function (w) { walletNames[w.id] = w.name; });
+  var whenFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Riyadh' });
+  function when(iso) { var d = new Date(iso); return isNaN(d) ? '' : whenFmt.format(d); }
+  function parseSarInput(v) {
+    var s = Core.normDigits(String(v || '')).replace(/[,\s]|SAR|SR|ر\.?س|ريال/gi, '');
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
+    return Number(s);
+  }
+
+  // The wallet automation empties wallet-texts.txt when it finds this on the clipboard, so texts the
+  // app already has don't stay in a readable file. Clipboard writes need a tap, so this waits for one.
+  var WALLET_DONE = '##WALLET-DONE##';
+  var donePending = false;
+  function writeDone() {
+    if (!donePending || !navigator.clipboard || !navigator.clipboard.writeText) return;
+    navigator.clipboard.writeText(WALLET_DONE).then(function () { donePending = false; }, function () { /* try again on the next tap */ });
+  }
+  function markWalletDone() {
+    if (demo) return;
+    donePending = true;
+    writeDone();
+  }
+  document.addEventListener('click', writeDone, true);
+
+  function renderWallets() {
+    if (!data) return;
+    var v = Core.walletsView(data, currentMonth());
+    var card = v.wallets.find(function (w) { return w.kind === 'card'; });
+    var wallets = v.wallets.filter(function (w) { return w.kind === 'wallet'; });
+    $('wal-total').textContent = wallets.some(function (w) { return w.known; }) ? money(v.total) : '–';
+    $('wal-owed').textContent = card && card.known ? money(-card.balance) : '–';
+    $('wal-hint').hidden = v.wallets.every(function (w) { return w.known; });
+    var ul = $('wal-list');
+    clear(ul);
+    v.wallets.forEach(function (w) {
+      var li = el('li');
+      var b = el('button', 'wal-row');
+      b.type = 'button';
+      var left = el('span', 'wal-name');
+      left.appendChild(el('b', null, w.name));
+      var sub = [];
+      if (!w.known) sub.push('Tap to enter the balance');
+      else if (w.updated) sub.push('Updated ' + when(w.updated));
+      if (num(w.month_spent) > 0) sub.push(whole(w.month_spent) + ' spent this month');
+      if (w.unread) sub.push(w.unread + ' unread text' + (w.unread === 1 ? '' : 's'));
+      left.appendChild(el('small', 'muted', sub.join(' · ')));
+      b.appendChild(left);
+      var right = el('span', 'wal-amt' + (w.kind === 'card' ? ' wal-owe' : ''));
+      if (!w.known) right.textContent = 'Set ›';
+      else if (w.kind === 'card') {
+        right.textContent = money(-w.balance);
+        if (w.available !== null) right.appendChild(el('small', 'muted', money(w.available) + ' available'));
+      } else right.textContent = money(w.balance);
+      b.appendChild(right);
+      b.addEventListener('click', function () { openWallet(w.id); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+
+  var walletOpen = null;
+  function openWallet(id) {
+    var w = Core.walletsView(data, currentMonth()).wallets.find(function (x) { return x.id === id; });
+    if (!w) return;
+    walletOpen = id;
+    var isCard = w.kind === 'card';
+    $('dlg-wallet-title').textContent = w.name;
+    $('dlg-wallet-balance').textContent = w.known ? (isCard ? money(-w.balance) + ' owed' : money(w.balance)) : 'No balance yet';
+    var meta = [];
+    if (w.start) meta.push('You set ' + money(isCard ? -w.start.amount : w.start.amount) + ' on ' + when(w.start.at));
+    if (w.texts_since_start) meta.push(w.texts_since_start + ' text' + (w.texts_since_start === 1 ? '' : 's') + ' since');
+    if (isCard && w.available !== null) meta.push(money(w.available) + ' available of ' + money(w.limit));
+    $('dlg-wallet-meta').textContent = meta.join(' · ');
+    $('dlg-wallet-amount-label').textContent = isCard ? 'Amount you owe now (SAR)' : 'Balance now (SAR)';
+    $('dlg-wallet-amount').value = w.known ? String(isCard ? -w.balance : w.balance) : '';
+    $('dlg-wallet-limit-field').hidden = !isCard;
+    $('dlg-wallet-limit').value = w.limit ? String(w.limit) : '';
+    showFormError('dlg-wallet-error', '');
+    var ul = $('dlg-wallet-recent');
+    clear(ul);
+    if (!w.recent.length) ul.appendChild(el('li', 'empty', 'No texts from ' + w.name + ' yet.'));
+    w.recent.forEach(function (t) {
+      var li = el('li');
+      var name = el('span', 'wal-name');
+      name.appendChild(el('span', null, t.merchant || t.description || 'Transaction'));
+      name.appendChild(el('small', 'muted', when(t.datetime || t.date) + ' · ' + (t.link ? 'Between your accounts' : catLabel(t.category))));
+      li.appendChild(name);
+      li.appendChild(el('span', 'wal-amt' + (t.amount > 0 ? ' pos' : ''), (t.amount > 0 ? '+' : '') + money(t.amount)));
+      ul.appendChild(li);
+    });
+    var unread = data.wallet_unread.filter(function (u) { return u.wallet === id; });
+    $('dlg-wallet-unread-box').hidden = !unread.length;
+    $('dlg-wallet-unread-title').textContent = unread.length + ' text' + (unread.length === 1 ? '' : 's') + ' the app couldn’t read';
+    $('dlg-wallet-unread').textContent = unread.map(function (u) { return u.text; }).join('\n\n———\n\n');
+    $('dlg-wallet-text').value = '';
+    openDialog('dlg-wallet');
+  }
+
+  function saveWallet(e) {
+    e.preventDefault();
+    if (!walletOpen) return;
+    var isCard = walletOpen === 'anb';
+    var amt = parseSarInput($('dlg-wallet-amount').value);
+    if (amt === null) { showFormError('dlg-wallet-error', 'Enter the amount in SAR, for example 250 or 250.50.'); return; }
+    var limit;
+    if (isCard) {
+      var lv = $('dlg-wallet-limit').value.trim();
+      limit = lv ? parseSarInput(lv) : null;
+      if (lv && limit === null) { showFormError('dlg-wallet-error', 'Enter the limit in SAR, or leave it empty.'); return; }
+    }
+    try { Core.setWalletStart(data, walletOpen, amt, isCard ? { limit: limit } : {}); } catch (err) { showFormError('dlg-wallet-error', err.message); return; }
+    closeDialog('dlg-wallet');
+    persist(); renderWallets();
+  }
+
+  function walletReport(r) {
+    var box = $('wal-result');
+    var parts = [r.inserted ? 'Added ' + r.inserted + ' transaction' + (r.inserted === 1 ? '' : 's') + '.' : 'Nothing new added.'];
+    if (r.duplicates) parts.push(r.duplicates + ' already added.');
+    if (r.unread) parts.push(r.unread + ' text' + (r.unread === 1 ? '' : 's') + ' couldn’t be read (open the wallet to see).');
+    box.textContent = parts.join(' ');
+    box.dataset.tone = r.inserted ? 'good' : '';
+    box.hidden = false;
+  }
+
+  function addWalletText() {
+    var text = $('dlg-wallet-text').value.trim();
+    if (!text || !walletOpen) return;
+    var tag = Core.WALLETS.find(function (w) { return w.id === walletOpen; }).tag;
+    // A hand-pasted text gets the time now, like the automation would give it.
+    var input = /##WALLET:/.test(text) ? text : '##WALLET:' + tag + '##\n' + text + '\n##AT## ' + new Date().toISOString();
+    Core.importTexts(data, input).then(function (r) {
+      closeDialog('dlg-wallet');
+      walletReport(r);
+      if (r.inserted || r.unread) { persist(); renderAll(); }
+    });
+  }
+
+  function onWalletPaste() {
+    if (!navigator.clipboard || !navigator.clipboard.readText) { showError('This browser can’t read the clipboard. Open a wallet and use “Add a text by hand”.'); return; }
+    navigator.clipboard.readText().then(function (text) {
+      if (!text || text.indexOf('##WALLET:') === -1) {
+        var box = $('wal-result');
+        box.textContent = 'No wallet texts on the clipboard. They are copied when a wallet text arrives; for an older one, open the wallet and use “Add a text by hand”.';
+        box.dataset.tone = 'warn'; box.hidden = false;
+        return;
+      }
+      return Core.importTexts(data, text).then(function (r) {
+        walletReport(r);
+        markWalletDone();
+        if (r.inserted || r.unread) { persist(); renderAll(); }
+      });
+    }).catch(function () {
+      var box = $('wal-result');
+      box.textContent = 'Couldn’t read the clipboard. Tap Paste when your phone asks.';
+      box.dataset.tone = 'warn'; box.hidden = false;
+    });
+  }
+
   // ---------- views ----------
   function showView() {
     var h = window.location.hash;
-    var view = h === '#salary' ? 'salary' : h === '#settings' ? 'settings' : h === '#plan' ? 'plan' : 'overview';
-    ['overview', 'plan', 'salary', 'settings'].forEach(function (v) {
+    var view = h === '#salary' ? 'salary' : h === '#settings' ? 'settings' : h === '#plan' ? 'plan' : h === '#wallets' ? 'wallets' : 'overview';
+    ['overview', 'plan', 'wallets', 'salary', 'settings'].forEach(function (v) {
       $('view-' + v).hidden = v !== view;
       if (v === view) $('tab-' + v).setAttribute('aria-current', 'page'); else $('tab-' + v).removeAttribute('aria-current');
     });
@@ -1102,6 +1271,7 @@
     if (view === 'salary') loadSalary();
     if (view === 'overview') renderTrend();
     if (view === 'plan') { renderPlan(); window.scrollTo(0, 0); }
+    if (view === 'wallets') renderWallets();
     if (view === 'settings') {
       renderQuick();
       $('autolock').value = String(settings.autolock);
@@ -1156,6 +1326,14 @@
     });
 
     $('shops-btn').addEventListener('click', openShops);
+    $('wal-paste').addEventListener('click', onWalletPaste);
+    $('wallet-form').addEventListener('submit', saveWallet);
+    $('dlg-wallet-add').addEventListener('click', addWalletText);
+    $('dlg-wallet-unread-clear').addEventListener('click', function () {
+      if (!walletOpen) return;
+      Core.clearWalletUnread(data, walletOpen);
+      closeDialog('dlg-wallet'); persist(); renderWallets();
+    });
     $('stmt-btn').addEventListener('click', function () { if (demo) return; $('stmt-file').click(); });
     $('stmt-file').addEventListener('change', onStatementFile);
     $('face-btn').addEventListener('click', onFace);

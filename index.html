@@ -75,6 +75,7 @@
         <nav class="tabs" aria-label="Sections">
           <a href="#overview" id="tab-overview" class="tab" aria-current="page">Overview</a>
           <a href="#plan" id="tab-plan" class="tab">Plan</a>
+          <a href="#wallets" id="tab-wallets" class="tab">Wallets</a>
           <a href="#salary" id="tab-salary" class="tab">Salary</a>
           <a href="#settings" id="tab-settings" class="tab">Settings</a>
         </nav>
@@ -253,6 +254,29 @@
         </div>
       </div>
 
+      <!-- Wallets & credit card -->
+      <div id="view-wallets" hidden>
+        <div class="plan-stack">
+          <section class="card wal-hero" aria-labelledby="wal-total-label">
+            <div class="wal-twin">
+              <div><h2 class="plan-label" id="wal-total-label">In your wallets</h2><p class="wal-big" id="wal-total">–</p></div>
+              <div><h2 class="plan-label">Owed on ANB card</h2><p class="wal-big" id="wal-owed">–</p></div>
+            </div>
+            <p class="plan-foot" id="wal-hint">Tap a wallet to enter what's in it now. After that, its texts keep it up to date.</p>
+          </section>
+
+          <section class="card" aria-labelledby="wal-list-title">
+            <div class="card-head">
+              <h2 id="wal-list-title">Wallets and card</h2>
+              <button type="button" class="btn-link" id="wal-paste">Paste wallet texts</button>
+            </div>
+            <ul class="wal-list" id="wal-list"></ul>
+            <p id="wal-result" class="import-result" role="status" hidden></p>
+            <p class="muted small plan-hint">Money moved between Al Rajhi and a wallet or the card is counted once, as a transfer between your own accounts, not as spending.</p>
+          </section>
+        </div>
+      </div>
+
       <!-- Salary -->
       <div id="view-salary" hidden>
         <div class="salary-grid">
@@ -324,6 +348,12 @@
             <p class="small">Your iPhone automation saves each Al Rajhi text to <b>bank-texts.txt</b> and copies that file. When you unlock this app, it reads the copied texts (tap <b>Paste</b> when iOS asks) and adds the new ones. Texts already added are skipped.</p>
             <p class="small">Missed one? Copy a text in Messages (press and hold → Copy) and tap <b>Paste texts</b> on the Overview.</p>
             <p class="muted small" id="tx-total"></p>
+          </section>
+
+          <section class="card" aria-labelledby="wtx-title">
+            <div class="card-head"><h2 id="wtx-title">Wallet and card texts</h2></div>
+            <p class="small">A separate iPhone automation (one per wallet, tagged like <b>##WALLET:STCPAY##</b>) saves those texts to <b>wallet-texts.txt</b> in On My iPhone › Finances and copies them together with your Al Rajhi texts. The Al Rajhi automation is not changed.</p>
+            <p class="small">After the app has added them, your next tap in the app puts a short “done” note on the clipboard. The next wallet text then empties wallet-texts.txt first, so texts don't pile up in a readable file.</p>
           </section>
 
           <section class="card" aria-labelledby="sec-title">
@@ -399,6 +429,38 @@
       <div class="dlg-actions">
         <button type="button" class="btn-outline" data-close>Cancel</button>
         <button type="submit" class="btn" id="type-add" value="add">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-wallet" class="dlg" aria-labelledby="dlg-wallet-title">
+    <form method="dialog" id="wallet-form" novalidate>
+      <h2 id="dlg-wallet-title"></h2>
+      <p class="dlg-amount" id="dlg-wallet-balance"></p>
+      <p class="muted small" id="dlg-wallet-meta"></p>
+      <label class="field"><span id="dlg-wallet-amount-label">Balance now (SAR)</span>
+        <input id="dlg-wallet-amount" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label class="field" id="dlg-wallet-limit-field" hidden><span>Credit limit (SAR, optional, to show what's available)</span>
+        <input id="dlg-wallet-limit" type="text" inputmode="decimal" autocomplete="off"></label>
+      <p id="dlg-wallet-error" class="form-error" role="alert" hidden></p>
+      <h3 class="dlg-sub">Latest</h3>
+      <ul class="wal-recent" id="dlg-wallet-recent"></ul>
+      <details class="raw" id="dlg-wallet-unread-box" hidden>
+        <summary id="dlg-wallet-unread-title"></summary>
+        <p class="muted small">These texts came from this wallet but the app couldn't tell the amount or direction. They didn't change the balance.</p>
+        <pre id="dlg-wallet-unread" dir="auto"></pre>
+        <p><button type="button" class="btn-link" id="dlg-wallet-unread-clear">Clear these</button></p>
+      </details>
+      <details class="raw">
+        <summary>Add a text by hand</summary>
+        <label class="sr-only" for="dlg-wallet-text">Text from this wallet</label>
+        <textarea id="dlg-wallet-text" rows="4" dir="auto" spellcheck="false" autocomplete="off" placeholder="Paste one text from this wallet"></textarea>
+        <p><button type="button" class="btn-outline" id="dlg-wallet-add">Add text</button></p>
+      </details>
+      <div class="dlg-actions">
+        <span class="spacer"></span>
+        <button type="button" class="btn-outline" data-close>Close</button>
+        <button type="submit" class="btn" id="dlg-wallet-save">Save balance</button>
       </div>
     </form>
   </dialog>

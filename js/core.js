@@ -218,22 +218,27 @@
 
   // The iOS Shortcut queues texts as "##SMS## <date>\n<text>". Without markers
   // (texts pasted by hand), each Al Rajhi alert ends with a date-only line.
-  var MARKER_RE = /^##SMS##[ \t]*(.*)$/;
+  // Wallet and credit card texts come from their own automation as "##WALLET:STCPAY##<text>"
+  // with "##AT## <date the text arrived>" added at the end (wallet texts often carry no date).
+  var MARKER_RE = /^##(SMS|WALLET:([A-Za-z0-9_]{1,20}))##[ \t]*(.*)$/;
+  var AT_RE = /##AT##\s*([0-9T:+\-.Z ]{10,40})/;
   // First line of an alert (purchase, card payoff, deposit, transfer, ATM, bill, refund, fee).
   var HEADER_START = /^(شراء|بطاقة[^:\d]*:\s*سداد|إيداع|ايداع|حوالة|تحويل|سحب|سداد|استرداد|استرجاع|رسوم|online purchase|pos purchase|purchase|atm withdrawal|incoming transfer|outgoing transfer|salary|refund)/i;
   function splitMessages(input) {
-    var text = String(input || '').replace(/\r\n?/g, '\n').replace(/([^\n])##SMS##/g, '$1\n##SMS##');
+    var text = String(input || '').replace(/\r\n?/g, '\n')
+      .replace(/##WALLET-DONE##/g, '\n')
+      .replace(/([^\n])##(SMS|WALLET:)/g, '$1\n##$2');
     var out = [];
-    if (/^##SMS##/m.test(text)) {
+    if (/^##(SMS|WALLET:[A-Za-z0-9_]+)##/m.test(text)) {
       var cur = null;
       text.split('\n').forEach(function (line) {
         var m = line.match(MARKER_RE);
         if (m) {
           if (cur) out.push(cur);
           // "##SMS## 2026-11-05T11:53..." carries a date; "##SMS##شراء PoS..." carries the text itself.
-          var rest = m[1].trim();
+          var rest = m[3].trim();
           var isDate = /^\d{4}-\d{2}-\d{2}/.test(rest);
-          cur = { receivedAt: isDate ? rest : null, lines: rest && !isDate ? [rest] : [] };
+          cur = { receivedAt: isDate ? rest : null, wallet: m[2] ? m[2].toLowerCase() : null, lines: rest && !isDate ? [rest] : [] };
         }
         else if (cur) cur.lines.push(line);
       });
@@ -253,8 +258,15 @@
       if (buf.some(function (l) { return l.trim(); })) out.push({ lines: buf });
     }
     return out.map(function (m) {
-      return { text: m.lines.join('\n').trim(), receivedAt: m.receivedAt || null };
-    }).filter(function (m) { return m.text && !/^-+$/.test(m.text); });
+      var t = m.lines.join('\n').trim(), at = t.match(AT_RE);
+      if (at) t = t.replace(AT_RE, '').trim();
+      if (m.wallet && !t) return null;
+      return {
+        text: t, receivedAt: (at && at[1].trim()) || m.receivedAt || null, wallet: m.wallet || null,
+        // Wallet texts are told apart by when they arrived too: two identical 25 SAR coffees are two payments.
+        key: m.wallet ? 'w:' + m.wallet + '|' + (at ? at[1].trim() : '') + '|' + t : t
+      };
+    }).filter(function (m) { return m && m.text && !/^-+$/.test(m.text); });
   }
 
   // ======================================================================
@@ -365,7 +377,7 @@
     }
     if (hint === 'transfer_in' && t.amount >= 150000 && EMPLOYER_RE.test(text)) return { category: 'salary', source: 'auto' };
     if (hint === 'atm_withdrawal' && !isCredit) return { category: 'cash', source: 'auto' };
-    if (hint === 'card_payment' || hint === 'own_transfer') return { category: 'transfer', source: 'auto' };
+    if (hint === 'card_payment' || hint === 'own_transfer' || hint === 'wallet_topup') return { category: 'transfer', source: 'auto' };
     var person = hint === 'transfer_out' || hint === 'transfer_in';
     for (var j = 0; j < COMPILED.length; j++) {
       var cat = COMPILED[j][0], words = COMPILED[j][1];
@@ -401,7 +413,9 @@
       rules: [],
       salary: null,
       next_id: 1,
-      meta: { created_at: new Date().toISOString(), last_import_at: null, last_backup_at: null, cat_version: CAT_VERSION }
+      meta: { created_at: new Date().toISOString(), last_import_at: null, last_backup_at: null, cat_version: CAT_VERSION },
+      wallets: defaultWallets(),
+      wallet_unread: []
     };
   }
 
@@ -412,6 +426,7 @@
     }
     d.rules = Array.isArray(d.rules) ? d.rules : [];
     d.meta = d.meta && typeof d.meta === 'object' ? d.meta : {};
+    ensureWallets(d);
     d.transactions.forEach(function (t) {
       if (!t || typeof t !== 'object' || !Number.isSafeInteger(t.amount) || !parseDay(t.date) || !CATEGORY_IDS[t.category]) {
         throw new Error('The backup contains a damaged transaction.');
@@ -486,6 +501,9 @@
           original_amount: originalAmount,
           original_currency: originalCurrency,
           subscription_id: null,
+          // null = Al Rajhi; otherwise the wallet or card it belongs to (stcpay, d360, urpay, barq, anb).
+          account: t.account && WALLET_IDS[t.account] ? t.account : null,
+          available_after: t.available_after !== undefined && t.available_after !== null ? toHalalas(t.available_after) : null,
           // Long numbers (bill, reference, IBAN) are masked in the saved copy of the text.
           raw: typeof t.raw === 'string' ? t.raw.slice(0, 2000).replace(/\d{8,}/g, function (n) { return '…' + n.slice(-3); }) : null,
           created_at: now
@@ -566,7 +584,8 @@
   function deleteTransaction(data, id) {
     var i = data.transactions.findIndex(function (x) { return x.id === id; });
     if (i === -1) throw new Error('not found');
-    data.transactions.splice(i, 1);
+    var gone = data.transactions.splice(i, 1)[0];
+    if (gone && gone.link) unlink(data, gone.id);
     detect(data);
   }
 
@@ -641,6 +660,7 @@
   function detect(data, opts) {
     var asOf = (opts && opts.asOf) || today();
     var txs = data.transactions;
+    linkTransfers(data);
 
     // Refunds from a shop we couldn't place: use the category of what was bought there.
     txs.forEach(function (r) {
@@ -868,7 +888,7 @@
     return data.transactions.filter(function (t) { return per(t.date) === month; }).map(function (t) {
       return {
         id: t.id, date: t.date, datetime: t.datetime, amount: toSar(t.amount), description: t.description, merchant: t.merchant,
-        category: t.category, type: t.type, card_last4: t.card_last4,
+        category: t.category, type: t.type, card_last4: t.card_last4, account: t.account || null, link: !!t.link,
         original_amount: toSar(t.original_amount), original_currency: t.original_currency
       };
     });
@@ -948,12 +968,17 @@
   function parseTexts(input) {
     var msgs = splitMessages(input);
     var ignored = 0;
+    var unread = [];
     return Promise.all(msgs.map(function (m) {
-      var t = parseAlRajhiSms(m.text, { receivedAt: m.receivedAt });
-      if (!t) { ignored++; return null; }
-      return smsId(m.text).then(function (id) { t.external_id = id; return t; });
+      var t = m.wallet ? parseWalletSms(m.text, m.wallet, { receivedAt: m.receivedAt }) : parseAlRajhiSms(m.text, { receivedAt: m.receivedAt });
+      if (!t) {
+        ignored++;
+        if (m.wallet && WALLET_IDS[m.wallet] && !IGNORE.test(m.text)) unread.push({ wallet: m.wallet, text: m.text, at: m.receivedAt });
+        return null;
+      }
+      return smsId(m.key || m.text).then(function (id) { t.external_id = id; return t; });
     })).then(function (list) {
-      return { parsed: list.filter(Boolean), ignored: ignored, total: msgs.length };
+      return { parsed: list.filter(Boolean), ignored: ignored, total: msgs.length, unread: unread, wallet_texts: msgs.some(function (m) { return m.wallet; }) };
     });
   }
 
@@ -1112,8 +1137,261 @@
       var r = importTransactions(data, p.parsed);
       r.ignored = p.ignored;
       r.messages = p.total;
+      r.wallet_texts = p.wallet_texts;
+      r.unread = keepUnread(data, p.unread);
       return r;
     });
+  }
+
+  // ======================================================================
+  // Wallets and credit card (STC Pay, D360, urpay, barq, ANB credit card).
+  // Their texts come from a separate iPhone automation tagged ##WALLET:<TAG>##.
+  // Balances: the starting amount you type in, then each text after it. A text
+  // that states the balance resets it; otherwise the amount is added or taken off.
+  // ======================================================================
+  var WALLET_LIST = [
+    { id: 'stcpay', name: 'STC Pay', kind: 'wallet', tag: 'STCPAY' },
+    { id: 'd360', name: 'D360 Bank', kind: 'wallet', tag: 'D360' },
+    { id: 'urpay', name: 'urpay', kind: 'wallet', tag: 'URPAY' },
+    { id: 'barq', name: 'barq', kind: 'wallet', tag: 'BARQ' },
+    { id: 'anb', name: 'ANB credit card', kind: 'card', tag: 'ANB' }
+  ];
+  var WALLET_IDS = {};
+  WALLET_LIST.forEach(function (w) { WALLET_IDS[w.id] = w; });
+  function defaultWallets() { return WALLET_LIST.map(function (w) { return { id: w.id, start: null, limit: null }; }); }
+  function ensureWallets(d) {
+    var have = Array.isArray(d.wallets) ? d.wallets.filter(function (w) { return w && WALLET_IDS[w.id]; }) : [];
+    d.wallets = WALLET_LIST.map(function (def) {
+      var w = have.find(function (x) { return x.id === def.id; }) || { id: def.id, start: null, limit: null };
+      if (w.start && !(Number.isSafeInteger(w.start.amount) && !isNaN(Date.parse(w.start.at)))) w.start = null;
+      if (!Number.isSafeInteger(w.limit) || w.limit <= 0) w.limit = null;
+      return w;
+    });
+    if (!Array.isArray(d.wallet_unread)) d.wallet_unread = [];
+    return d;
+  }
+
+  // Which way the money went. The earliest match in the text wins; on a tie, the first rule.
+  var W_RULES = [
+    { re: /استرداد|استرجاع|refund|reversal|cash\s?back|كاش\s?باك/i, type: 'refund', channel: 'other', sign: +1 },
+    { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:واردة|وارد)|استلمت|استلام|تم\s*استلام|وصلتك|وصلك|payment received|received|credited|أضيف|اضيف|إضافة|اضافة|إيداع|ايداع|deposit|incoming/i, type: 'transfer_in', channel: 'transfer', sign: +1 },
+    { re: /شحن\s*(?:ال)?محفظ|تعبئة\s*(?:ال)?محفظ|top.?up|wallet (?:was )?(?:topped|funded|loaded)/i, type: 'wallet_topup', channel: 'transfer', sign: +1 },
+    { re: /سحب|withdraw|صراف|\batm\b/i, type: 'atm_withdrawal', channel: 'atm', sign: -1 },
+    { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:صادرة|صادر)|حولت|تحويل\s*(?:مبلغ\s*)?(?:إلى|الى|لـ|ل\s)|transfer(?:red)?\s*to|\bsent\b|أرسلت|ارسلت|إرسال|ارسال/i, type: 'transfer_out', channel: 'transfer', sign: -1 },
+    { re: /سداد\s*(?:فاتورة|فواتير)|فاتورة|sadad|\bbill\b/i, type: 'bill_payment', channel: 'sadad', sign: -1 },
+    { re: /رسوم|\bfees?\b/i, type: 'fee', channel: 'other', sign: -1 },
+    { re: /شراء\s*(?:إنترنت|انترنت|عبر الإنترنت|عبر الانترنت|اونلاين)|online|e-?commerce|internet purchase/i, type: 'online_purchase', channel: 'online', sign: -1 },
+    { re: /شراء|purchase|دفع|\bpaid\b|payment|خصم|debited|مدين|\bpos\b|apple pay|مدى|\bmada\b|عملية/i, type: 'pos_purchase', channel: 'pos', sign: -1 }
+  ];
+  // A payment toward the credit card (from Al Rajhi or anywhere) lowers what you owe.
+  var CARD_PAYMENT_RE = /سداد(?!\s*(?:فاتورة|فواتير))|payment received|repayment|received your payment|تم\s*استلام\s*(?:دفعة|مبلغ|سداد)/i;
+  var W_AMOUNT = new RegExp('(?:' + CUR + '\\s*' + NUM + '|' + NUM + '\\s*' + CUR + ')', 'gi');
+  var W_AMOUNT_BARE = new RegExp('(?:بمبلغ|مبلغ|بقيمة|المبلغ|amount)\\s*:?\\s*' + NUM, 'i');
+  var W_BAL_KW = /(?:رصيدك|الرصيد|رصيد|balance|\bbal\b)[^\d]{0,25}$/i;
+  var W_AVAIL_KW = /(?:المتاح|الحد المتاح|الرصيد المتاح|available(?:\s*(?:credit|limit|balance))?)[^\d]{0,25}$/i;
+  var W_OWED_KW = /(?:المستحق|المبلغ المستحق|الرصيد المستحق|outstanding|amount due|total due)[^\d]{0,25}$/i;
+  var W_AMT_KW = /(?:بمبلغ|مبلغ|بقيمة|amount|شراء|purchase)[^\d]{0,25}$/i;
+  var W_WHO = /(?:^|[\s:،,])(لدى|عند|في|at|from|to|إلى|الى|لـ|من)\s*:?\s*([^\n]+?)(?=\s*(?:بمبلغ|مبلغ|بقيمة|المبلغ|الرصيد|رصيد|المتاح|balance|available|remaining|\bbal\b|\bcard\b|\*|بتاريخ|تاريخ|بطاقة|عبر|في\s+\d|on\s+\d|\d{1,4}[\/\-.]\d|SAR|SR|ر\.?\s?س|ريال|[.،,;]|$))/gim;
+  var W_NOT_WHO = /محفظت|حساب|بطاقت|بطاقة|wallet|account|\bcard\b|\byour\b|رصيد|^\W*$|^[\d*\s]+$/i;
+  var W_DATE = /\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/;
+
+  /** Parse one wallet or credit card text. Returns a transaction-like object or null. */
+  function parseWalletSms(text, walletId, meta) {
+    meta = meta || {};
+    var def = WALLET_IDS[walletId];
+    if (!def || !text || typeof text !== 'string' || IGNORE.test(text)) return null;
+    var t = normDigits(text);
+    // Which way: card payments first for the card, then the earliest wording in the text.
+    var rule = null, at = Infinity;
+    if (def.kind === 'card' && CARD_PAYMENT_RE.test(t)) rule = { type: 'card_payment', channel: 'transfer', sign: +1 };
+    else W_RULES.forEach(function (r) { var m = t.match(r.re); if (m && m.index < at) { at = m.index; rule = r; } });
+    if (!rule) return null;
+
+    var amount = null, balance = null, available = null, owed = null, m;
+    W_AMOUNT.lastIndex = 0;
+    while ((m = W_AMOUNT.exec(t))) {
+      var before = t.slice(Math.max(0, m.index - 40), m.index);
+      var a = parseAmount(m[0]);
+      if (!a) continue;
+      // The label closest before the number decides what it is ("شحن رصيد بمبلغ 50" is an amount).
+      var labels = [[W_AVAIL_KW, 'available'], [W_OWED_KW, 'owed'], [W_BAL_KW, 'balance'], [W_AMT_KW, 'amount']].map(function (p) {
+        var mm = before.match(p[0]); return mm ? { kind: p[1], at: mm.index } : null;
+      }).filter(Boolean).sort(function (x, y) { return y.at - x.at; });
+      var kind = labels.length ? labels[0].kind : 'amount';
+      if (kind === 'available' && available === null) available = a;
+      else if (kind === 'owed' && owed === null) owed = a;
+      else if (kind === 'balance' && balance === null) balance = a;
+      else if (kind === 'amount' && !amount) amount = a;
+    }
+    if (!amount && (m = t.match(W_AMOUNT_BARE))) amount = { amount: toNumber(m[1]), currency: 'SAR' };
+    if (!amount || !(amount.amount > 0)) return null;
+
+    // Who: the shop for payments, the sender for money in.
+    var who = [];
+    W_WHO.lastIndex = 0;
+    while ((m = W_WHO.exec(t))) {
+      var v = m[2].replace(/\*+\d*|\d{4,}/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+      if (v && !W_NOT_WHO.test(v)) who.push({ kw: m[1].toLowerCase(), v: v });
+    }
+    var prefer = rule.sign > 0 ? ['من', 'from'] : ['لدى', 'عند', 'at', 'لـ', 'إلى', 'الى', 'to', 'في'];
+    var pick = null;
+    prefer.some(function (k) { pick = who.find(function (w) { return w.kw === k; }); return !!pick; });
+    var merchant = pick ? pick.v : null;
+
+    var dt = t.match(W_DATE);
+    var date = meta.receivedAt ? parseSmsDate(null, meta.receivedAt) : null;
+    if (!date && dt) date = parseSmsDate(dt[0], null);
+    var card = t.match(/(?:بطاقة|البطاقة|card)[^\d\n]{0,12}\*?(\d{4})(?!\d)/i);
+    var label = { refund: 'Refund', transfer_in: 'Money in', wallet_topup: 'Top-up', atm_withdrawal: 'Cash withdrawal', transfer_out: 'Transfer out',
+      bill_payment: 'Bill payment', fee: 'Fee', online_purchase: 'Online purchase', pos_purchase: 'Payment', card_payment: 'Card payment' }[rule.type];
+    var foreign = amount.currency !== 'SAR';
+    return {
+      date: date,
+      amount: Math.round(rule.sign * amount.amount * 100) / 100,
+      currency: foreign ? amount.currency : 'SAR',
+      // The wallet's own name stays out of the description: "STC Pay" would make every payment look like a transfer.
+      description: label + (merchant ? ' | ' + merchant : ''),
+      merchant: merchant || (rule.type === 'card_payment' ? def.name : null),
+      raw_category: rule.type,
+      channel: rule.channel,
+      card_last4: card ? card[1] : null,
+      // For the card a balance is what you owe (negative); for a wallet, what's in it.
+      balance_after: def.kind === 'card' ? (owed && owed.currency === 'SAR' ? -owed.amount : null) : (balance && balance.currency === 'SAR' ? balance.amount : null),
+      available_after: def.kind === 'card' && available && available.currency === 'SAR' ? available.amount : null,
+      account: walletId,
+      raw: text
+    };
+  }
+
+  /** Wallet texts the parser couldn't read, kept (encrypted with the rest) so they can be looked at. */
+  function keepUnread(data, list) {
+    ensureWallets(data);
+    var added = 0;
+    (list || []).forEach(function (u) {
+      var text = String(u.text).slice(0, 1000).replace(/\d{8,}/g, function (n) { return '…' + n.slice(-3); });
+      if (data.wallet_unread.some(function (x) { return x.text === text && x.wallet === u.wallet; })) return;
+      data.wallet_unread.push({ wallet: u.wallet, text: text, at: u.at || new Date().toISOString() });
+      added++;
+    });
+    if (data.wallet_unread.length > 30) data.wallet_unread = data.wallet_unread.slice(-30);
+    return added;
+  }
+
+  function txTime(t) { var v = Date.parse(t.datetime || (t.date + 'T12:00:00+03:00')); return isNaN(v) ? 0 : v; }
+  function sortedRules(data) { return data.rules.slice().sort(function (a, b) { return b.pattern.length - a.pattern.length; }); }
+
+  // Money moved between Al Rajhi and a wallet or the card shows up twice (out of one, into the
+  // other). Pair them by exact amount within a few days and mark both as a transfer between your
+  // own accounts, so neither counts as spending, income or "sent to people".
+  var LINK_WALLET = { wallet_topup: 1, transfer_in: 1, transfer_out: 1, card_payment: 1, own_transfer: 1, deposit: 1 };
+  var LINK_BANK = { transfer_out: 3, transfer_in: 3, own_transfer: 3, deposit: 3, bill_payment: 3, pos_purchase: 1, online_purchase: 1 };
+  function revertLink(data, t) {
+    delete t.link;
+    if (t.category_source === 'link') {
+      var c = categorize(t, sortedRules(data));
+      t.category = c.category; t.category_source = c.source; t.type = typeFor(c.category, t.amount, null);
+    }
+  }
+  function unlink(data, id) {
+    data.transactions.forEach(function (t) { if (t.link === id) revertLink(data, t); });
+  }
+  function linkTransfers(data) {
+    var txs = data.transactions, byId = {};
+    txs.forEach(function (t) { byId[t.id] = t; });
+    txs.forEach(function (t) {
+      if (!t.link) return;
+      var p = byId[t.link];
+      if (!p || p.link !== t.id || t.category_source === 'manual' || p.category_source === 'manual') revertLink(data, t);
+    });
+    var free = txs.filter(function (t) { return !t.link && t.category_source !== 'manual' && t.booking_status !== 'pending'; });
+    free.filter(function (t) { return t.account && LINK_WALLET[t.raw_category]; })
+      .sort(function (a, b) { return txTime(a) - txTime(b); })
+      .forEach(function (w) {
+        if (w.link) return;
+        var best = null, bestGap = Infinity;
+        free.forEach(function (o) {
+          if (o.link || o === w || (o.account || null) === w.account || o.amount !== -w.amount) return;
+          var days = o.account ? (LINK_WALLET[o.raw_category] ? 3 : 0) : (LINK_BANK[o.raw_category] || 0);
+          // A purchase on the Al Rajhi card only pairs with money arriving in the wallet (Apple Pay top-up).
+          if (days === 1 && w.amount < 0) days = 0;
+          var gap = Math.abs(txTime(o) - txTime(w));
+          if (!days || gap > days * DAY) return;
+          if (gap < bestGap) { best = o; bestGap = gap; }
+        });
+        if (best) { w.link = best.id; best.link = w.id; }
+      });
+    txs.forEach(function (t) {
+      if (t.link && t.category_source !== 'manual') { t.category = 'transfer'; t.category_source = 'link'; t.type = 'transfer'; }
+    });
+  }
+
+  /** Balance of one wallet/card now, in halalas, plus when it was last updated. */
+  function walletBalance(data, w) {
+    var def = WALLET_IDS[w.id];
+    var txs = data.transactions.filter(function (t) { return t.account === w.id && t.booking_status !== 'pending'; })
+      .sort(function (a, b) { return txTime(a) - txTime(b) || a.id - b.id; });
+    var startAt = w.start ? Date.parse(w.start.at) : -Infinity;
+    var bal = w.start ? w.start.amount : 0, known = !!w.start, updated = w.start ? w.start.at : null, since = 0;
+    txs.forEach(function (t) {
+      if (txTime(t) <= startAt) return; // already part of the starting amount
+      var told = null;
+      if (t.balance_after !== null && t.balance_after !== undefined) told = t.balance_after;
+      else if (def.kind === 'card' && t.available_after !== null && t.available_after !== undefined && w.limit) told = t.available_after - w.limit;
+      if (told !== null) { bal = told; known = true; } else bal += t.amount;
+      updated = t.datetime || t.date;
+      since++;
+    });
+    return { balance: bal, known: known, updated: updated, since: since };
+  }
+
+  /** Everything the Wallets tab shows. Amounts in SAR; the card's balance is negative (what you owe). */
+  function walletsView(data, month) {
+    ensureWallets(data);
+    var per = periodFn(data);
+    month = month || periodOf(data, today());
+    var total = 0, owed = 0, anyKnown = false;
+    var list = data.wallets.map(function (w) {
+      var def = WALLET_IDS[w.id], b = walletBalance(data, w), spent = 0, inn = 0;
+      var mine = data.transactions.filter(function (t) { return t.account === w.id; });
+      mine.forEach(function (t) {
+        if (per(t.date) !== month || t.booking_status === 'pending') return;
+        if (t.category === 'transfer') return;
+        if (t.amount < 0) spent -= t.amount; else inn += t.amount;
+      });
+      if (b.known) {
+        anyKnown = true;
+        if (def.kind === 'card') owed += Math.max(0, -b.balance); else total += b.balance;
+      }
+      var recent = mine.slice().sort(function (a, b2) { return txTime(b2) - txTime(a) || b2.id - a.id; }).slice(0, 10).map(function (t) {
+        return { id: t.id, date: t.date, datetime: t.datetime, amount: toSar(t.amount), merchant: t.merchant, description: t.description, category: t.category, type: t.type, link: !!t.link };
+      });
+      return {
+        id: w.id, name: def.name, kind: def.kind, tag: def.tag,
+        balance: toSar(b.balance), known: b.known, updated: b.updated, texts_since_start: b.since,
+        start: w.start ? { amount: toSar(w.start.amount), at: w.start.at } : null,
+        limit: toSar(w.limit), available: def.kind === 'card' && w.limit && b.known ? toSar(w.limit + b.balance) : null,
+        month_spent: toSar(spent), month_in: toSar(inn), count: mine.length, recent: recent,
+        unread: data.wallet_unread.filter(function (u) { return u.wallet === w.id; }).length
+      };
+    });
+    return { month: month, wallets: list, total: toSar(total), card_owed: toSar(owed), any_known: anyKnown, unread: data.wallet_unread.slice() };
+  }
+
+  /** Set a wallet's balance as of now (or `at`). For the card pass what you owe (a positive number) and the limit. */
+  function setWalletStart(data, id, amountSar, opts) {
+    ensureWallets(data);
+    opts = opts || {};
+    var w = data.wallets.find(function (x) { return x.id === id; });
+    if (!w) throw new Error('unknown wallet');
+    var h = toHalalas(amountSar);
+    if (WALLET_IDS[id].kind === 'card') h = -Math.abs(h); else if (h < 0) throw new Error('A wallet balance can’t be below zero.');
+    w.start = { amount: h, at: opts.at || new Date().toISOString() };
+    if (opts.limit !== undefined) w.limit = opts.limit === null || opts.limit === '' ? null : Math.abs(toHalalas(opts.limit)) || null;
+    return w;
+  }
+  function clearWalletUnread(data, id) {
+    ensureWallets(data);
+    data.wallet_unread = data.wallet_unread.filter(function (u) { return id && u.wallet !== id; });
   }
 
   // ======================================================================
@@ -1129,7 +1407,7 @@
       if (!booked(t) || t.date > asOf || per(t.date) !== key) return;
       if (t.category === 'transfer') {
         // Money sent to people (rent, family) is gone too; moves between own accounts and card payoffs are not.
-        if (t.amount < 0 && t.raw_category === 'transfer_out') sent -= t.amount;
+        if (t.amount < 0 && t.raw_category === 'transfer_out' && !t.link) sent -= t.amount;
         return;
       }
       if (t.type === 'salary' || t.type === 'income') income += t.amount;
@@ -1145,7 +1423,7 @@
     });
     var groups = new Map();
     data.transactions.forEach(function (t) {
-      if (!booked(t) || t.amount >= 0 || t.category !== 'transfer' || t.raw_category !== 'transfer_out') return;
+      if (!booked(t) || t.amount >= 0 || t.category !== 'transfer' || t.raw_category !== 'transfer_out' || t.link) return;
       var k = merchantKey(t);
       if (!k) return;
       if (!groups.has(k)) groups.set(k, []);
@@ -1188,7 +1466,7 @@
     var prev = shiftMonth(key, -1), prevRange = periodRange(data, prev);
     var ps = monthSummary(data, prev), prevSent = 0;
     data.transactions.forEach(function (t) {
-      if (booked(t) && t.amount < 0 && t.category === 'transfer' && t.raw_category === 'transfer_out' && per(t.date) === prev) prevSent -= t.amount;
+      if (booked(t) && t.amount < 0 && t.category === 'transfer' && t.raw_category === 'transfer_out' && !t.link && per(t.date) === prev) prevSent -= t.amount;
     });
     var before = {};
     categoryBreakdown(data, shiftMonth(prev, -1)).forEach(function (c) { before[c.category] = c.amount; });
@@ -1228,6 +1506,9 @@
     // views
     monthSummary: monthSummary, monthlyTrend: monthlyTrend, categoryBreakdown: categoryBreakdown,
     subscriptionsOut: subscriptionsOut, transactionsOut: transactionsOut, monthsWithData: monthsWithData,
-    setSalaryProfile: setSalaryProfile, salaryView: salaryView, planView: planView
+    setSalaryProfile: setSalaryProfile, salaryView: salaryView, planView: planView,
+    // wallets
+    WALLETS: WALLET_LIST, parseWalletSms: parseWalletSms, walletsView: walletsView, setWalletStart: setWalletStart,
+    linkTransfers: linkTransfers, ensureWallets: ensureWallets, clearWalletUnread: clearWalletUnread
   };
 });

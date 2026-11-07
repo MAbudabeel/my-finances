@@ -1,0 +1,146 @@
+// Wallets & credit card. node --test test/
+// These texts are made-up examples in the usual Saudi wallet style; replace them with
+// real ones (card digits changed) once the user sends samples.
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const Core = require('../js/core.js');
+
+const AT = (h, m) => `2026-11-07T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+03:00`;
+const W = (tag, text, at) => `##WALLET:${tag}##${text}\n##AT## ${at}\n`;
+
+test('wallet marker glued to the text, with the arrival time, splits and parses', async () => {
+  const input = W('STCPAY', 'تم الدفع بمبلغ 25.00 ريال لدى DR CAFE\nرصيدك الحالي 474.50 ريال', AT(9, 15));
+  const msgs = Core.splitMessages(input);
+  assert.equal(msgs.length, 1);
+  assert.equal(msgs[0].wallet, 'stcpay');
+  assert.equal(msgs[0].receivedAt, AT(9, 15));
+  assert.ok(!/##/.test(msgs[0].text));
+  const t = Core.parseWalletSms(msgs[0].text, 'stcpay', { receivedAt: msgs[0].receivedAt });
+  assert.equal(t.amount, -25);
+  assert.equal(t.balance_after, 474.5);
+  assert.equal(t.merchant, 'DR CAFE');
+  assert.equal(t.date, AT(9, 15));
+});
+
+test('one-line glued file from iOS (no line breaks at all) still splits', () => {
+  const input = '##WALLET:URPAY##Purchase SAR 40.00 at JAHEZ Balance SAR 160.00 ##AT## 2026-11-07T10:00:00+03:00##WALLET:URPAY##Received SAR 100.00 from AHMED ##AT## 2026-11-07T11:00:00+03:00';
+  const msgs = Core.splitMessages(input);
+  assert.equal(msgs.length, 2);
+  const a = Core.parseWalletSms(msgs[0].text, 'urpay', msgs[0]);
+  const b = Core.parseWalletSms(msgs[1].text, 'urpay', msgs[1]);
+  assert.equal(a.amount, -40); assert.equal(a.balance_after, 160); assert.equal(a.merchant, 'JAHEZ');
+  assert.equal(b.amount, 100); assert.equal(b.merchant, 'AHMED');
+});
+
+test('two identical coffees at different times are two payments; the same text twice is one', async () => {
+  const d = Core.emptyData();
+  const coffee = 'تم خصم 18.00 ر.س من محفظتك لدى BARNS';
+  let r = await Core.importTexts(d, W('BARQ', coffee, AT(8, 0)) + W('BARQ', coffee, AT(15, 30)));
+  assert.equal(r.inserted, 2);
+  r = await Core.importTexts(d, W('BARQ', coffee, AT(8, 0)));
+  assert.equal(r.inserted, 0); assert.equal(r.duplicates, 1);
+});
+
+test('mixed clipboard: Al Rajhi texts and wallet texts together', async () => {
+  const d = Core.emptyData();
+  const input = '##SMS##شراء PoS\nعبر:1111;مدى-ابل باي\nبـSAR 4\nلـMONTE CAR\n3/11/26 22:05\n' + W('D360', 'Payment of SAR 12.00 at HUNGERSTATION', AT(12, 0));
+  const r = await Core.importTexts(d, input);
+  assert.equal(r.inserted, 2);
+  assert.equal(r.wallet_texts, true);
+  assert.equal(d.transactions.filter((t) => t.account === 'd360').length, 1);
+  assert.equal(d.transactions.filter((t) => !t.account).length, 1);
+});
+
+test('balance: starting amount, then texts with and without a balance', async () => {
+  const d = Core.emptyData();
+  Core.setWalletStart(d, 'stcpay', 500, { at: AT(7, 0) });
+  await Core.importTexts(d, W('STCPAY', 'تم الدفع بمبلغ 30.00 ريال لدى KUDU', AT(9, 0)));
+  let v = Core.walletsView(d).wallets.find((w) => w.id === 'stcpay');
+  assert.equal(v.balance, 470);
+  await Core.importTexts(d, W('STCPAY', 'تم الدفع بمبلغ 10.00 ريال لدى ALBAIK رصيدك 455.00 ريال', AT(10, 0)));
+  v = Core.walletsView(d).wallets.find((w) => w.id === 'stcpay');
+  assert.equal(v.balance, 455); // the text's own balance wins
+  // A text from before the starting amount was set is already part of it.
+  await Core.importTexts(d, W('STCPAY', 'تم الدفع بمبلغ 99.00 ريال لدى OLD', AT(6, 0)));
+  v = Core.walletsView(d).wallets.find((w) => w.id === 'stcpay');
+  assert.equal(v.balance, 455);
+});
+
+test('credit card: purchases raise what you owe, a payment lowers it; available from limit', async () => {
+  const d = Core.emptyData();
+  Core.setWalletStart(d, 'anb', 1200, { at: AT(7, 0), limit: 10000 });
+  await Core.importTexts(d, W('ANB', 'شراء عبر نقاط البيع بطاقة ائتمانية **5555 بمبلغ 300.00 SAR لدى NAHDI', AT(9, 0)));
+  let c = Core.walletsView(d).wallets.find((w) => w.id === 'anb');
+  assert.equal(c.balance, -1500); assert.equal(c.available, 8500);
+  await Core.importTexts(d, W('ANB', 'تم استلام سداد بمبلغ 1000.00 SAR لبطاقتك الائتمانية', AT(11, 0)));
+  c = Core.walletsView(d).wallets.find((w) => w.id === 'anb');
+  assert.equal(c.balance, -500);
+  // A text that states the available limit resets it.
+  await Core.importTexts(d, W('ANB', 'Purchase SAR 50.00 at STARBUCKS card **5555 Available limit SAR 9,400.00', AT(12, 0)));
+  c = Core.walletsView(d).wallets.find((w) => w.id === 'anb');
+  assert.equal(c.balance, -600); assert.equal(c.available, 9400);
+  const t = d.transactions.find((x) => x.merchant === 'STARBUCKS');
+  assert.equal(t.category, 'coffee'); // card spending counts as spending
+});
+
+test('Al Rajhi -> STC Pay top-up is one transfer, not spending and not "sent to people"', async () => {
+  const d = Core.emptyData();
+  // Al Rajhi outgoing transfer to the user's own wallet (name is a person's name, not "STC Pay").
+  await Core.importTexts(d, '##SMS##حوالة صادرة\nبـSR 200\nمن1234\nلـ9999;OWN NAME\n26/11/7 09:00\n');
+  const bank = d.transactions[0];
+  assert.equal(bank.raw_category, 'transfer_out');
+  await Core.importTexts(d, W('STCPAY', 'تم استلام حوالة بمبلغ 200.00 ريال من OWN NAME', AT(9, 1)));
+  const wal = d.transactions.find((t) => t.account === 'stcpay');
+  assert.equal(bank.link, wal.id); assert.equal(wal.link, bank.id);
+  assert.equal(bank.category, 'transfer'); assert.equal(wal.category, 'transfer');
+  const p = Core.planView(d, '2026-11-07');
+  assert.equal(p.sent, 0);
+  const s = Core.monthSummary(d, Core.periodOf(d, '2026-11-07'));
+  assert.equal(s.spending, 0); assert.equal(s.income, 0);
+  // Then spending from the wallet counts once.
+  await Core.importTexts(d, W('STCPAY', 'تم الدفع بمبلغ 45.00 ريال لدى HUNGERSTATION', AT(13, 0)));
+  assert.equal(Core.monthSummary(d, Core.periodOf(d, '2026-11-07')).spending, 45);
+});
+
+test('Al Rajhi paying the ANB card by SADAD pairs with the card payment', async () => {
+  const d = Core.emptyData();
+  await Core.importTexts(d, '##SMS##سداد فاتورة بـSR 1000\nلـANB CREDIT CARD\n7/11/26 10:00\n');
+  await Core.importTexts(d, W('ANB', 'تم استلام سداد بمبلغ 1000.00 SAR', AT(10, 5)));
+  assert.ok(d.transactions.every((t) => t.category === 'transfer' && t.link));
+  assert.equal(Core.monthSummary(d, Core.periodOf(d, '2026-11-07')).spending, 0);
+});
+
+test('a hand-changed category breaks the pair, deleting one half restores the other', async () => {
+  const d = Core.emptyData();
+  await Core.importTexts(d, '##SMS##حوالة صادرة\nبـSR 75\nمن1234\nلـ9999;SARA\n26/11/7 09:00\n');
+  await Core.importTexts(d, W('URPAY', 'Received SAR 75.00 from SARA', AT(9, 2)));
+  const [a, b] = d.transactions;
+  assert.ok(a.link && b.link);
+  Core.deleteTransaction(d, b.id);
+  assert.ok(!a.link);
+  assert.equal(a.category, 'transfer'); // back to an ordinary transfer to a person
+  assert.ok(Core.planView(d, '2026-11-07').sent > 0);
+});
+
+test('unreadable wallet texts are kept for a look; codes are ignored', async () => {
+  const d = Core.emptyData();
+  const r = await Core.importTexts(d, W('STCPAY', 'Welcome to the new STC Bank app!', AT(9, 0)) + W('STCPAY', 'رمز التحقق 1234 لا تشارك', AT(9, 1)));
+  assert.equal(r.inserted, 0);
+  assert.equal(r.unread, 1);
+  assert.equal(Core.walletsView(d).unread.length, 1);
+});
+
+test('old backups without wallets still load', () => {
+  const d = Core.emptyData(); delete d.wallets; delete d.wallet_unread;
+  Core.validateData(d);
+  assert.equal(d.wallets.length, 5);
+});
+
+test('the done marker and emptied file are ignored', async () => {
+  const d = Core.emptyData();
+  const r = await Core.importTexts(d, '##WALLET-DONE##');
+  assert.equal(r.inserted, 0);
+  const r2 = await Core.importTexts(d, '-\n' + W('BARQ', 'Paid SAR 9.00 to ALI', AT(9, 0)));
+  assert.equal(r2.inserted, 1);
+});

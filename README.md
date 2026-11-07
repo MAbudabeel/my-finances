@@ -49,6 +49,8 @@ Add it to the Home Screen next to the app.
 
 What iOS doesn't allow: a website app can't run in the background, read your files, or read the clipboard without a tap. So the one tap on Paste at unlock is the minimum.
 
+**Wallets and the ANB credit card.** A Wallets tab tracks STC Pay, D360, urpay, barq and the ANB card from a separate automation (its own tag and file, emptied after the app reads it). Setup: [WALLET-SETUP.md](WALLET-SETUP.md).
+
 **Past months from a statement.** In the Al Rajhi app, export the account statement (كشف حساب) as PDF and save it to Files. In Finances tap **Import a bank statement (PDF)…** and pick it. The PDF is read on the phone (pdf.js, bundled in `vendor/pdfjs/`); nothing is uploaded. Transactions already added from texts (same amount within a day) and rows already imported are skipped, so overlapping statements are safe.
 
 **3. In the app:** open Finances → unlock → **Paste texts** → tap **Paste** when iOS asks.
@@ -66,8 +68,10 @@ js/demo.js            6 months of fake alerts for "Try it with demo data"
 js/statement.js       reads a statement PDF's text on the phone (pdf.js, loaded only when used)
 vendor/pdfjs/         pdf.js 4.10.38 legacy build (Apache-2.0)
 js/app.js             UI
+WALLET-SETUP.md       iPhone steps for the wallet / credit card texts
 sw.js                 offline cache of the app files (never sees data)
 test/core.test.js     node --test test/*.test.js
+test/wallet.test.js   wallet parsing, balances, transfer pairing
 ```
 
 ## Tested (2026-11-06)
