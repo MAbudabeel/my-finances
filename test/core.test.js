@@ -396,3 +396,32 @@ test('unknown shops are listed until the user picks, and "Other" stops the askin
   assert.equal(Core.unknownShops(d).length, 0);
   assert.ok(d.transactions.filter((x) => x.merchant === 'XYZ TRADING EST').every((x) => x.category === 'groceries'));
 });
+
+test('statement PDF rows: layout grouping, types, names, and no double count with texts', async () => {
+  const it = (x, y, str) => ({ page: 2, x, y, str });
+  const items = [
+    it(65, 803, 'Date'), it(158, 803, 'Transaction Details'), it(319, 803, 'Debit'),
+    it(50, 778, '2026/07/27'), it(111, 784, 'POS purchase Apple pay (Domestic)'), it(111, 776, 'Time:19:41:59, Notes:(1111222233334444-555566667777) ALBAIK'),
+    it(111, 770, 'BRANCH 9, RIYADH, SA'), it(311, 778, '30.00 SAR'), it(403, 778, '0.00 SAR'), it(486, 778, '970.00 SAR'),
+    it(50, 752, '2026/07/28'), it(111, 758, 'Sariee Inward Payments'), it(111, 750, 'Time:09:04:45, Notes:PAYROLL-SRJHI00000000001-'),
+    it(111, 744, 'XXBANK0000001-EXAMPLE TRADING COMPANY-'), it(313, 752, '0.00 SAR'), it(393, 752, '9,000.00 SAR'), it(484, 752, '9,970.00 SAR'),
+    it(50, 726, '2026/07/28'), it(111, 732, 'Internal Transfer'), it(111, 721, 'Time:17:37:26, Notes:W-/TOACCT/00000000000000001TOسالم-ايجار'),
+    it(305, 726, '2,500.00 SAR'), it(403, 726, '0.00 SAR'), it(486, 726, '7,470.00 SAR'),
+    it(50, 700, '2026/07/29'), it(111, 706, 'Outward IPS Credit Transaction Charges'), it(111, 695, 'Time:09:29:42, Notes:9100000000000001/SOMEONE'),
+    it(313, 700, '1.15 SAR'), it(403, 700, '0.00 SAR'), it(484, 700, '7,468.85 SAR'),
+    it(50, 674, '2026/07/30'), it(111, 680, 'Partial payment'), it(111, 669, 'Time:17:23:47, Notes:T24 INST. 45 LOAN 00000000'),
+    it(305, 674, '100.00 SAR'), it(403, 674, '0.00 SAR'), it(486, 674, '7,368.85 SAR')
+  ];
+  const rows = Core.statementRows(items);
+  assert.equal(rows.length, 5);
+  const d = Core.emptyData();
+  await Core.importTexts(d, 'شراء PoS\nعبر:1111;مدى-ابل باي\nبـSAR 30\nلـALBAIK 9\n27/7/26 19:41');
+  const r = Core.importStatement(d, rows);
+  assert.equal(r.inserted, 4); assert.equal(r.matched, 1);
+  const by = (m) => d.transactions.find((t) => t.merchant === m);
+  assert.equal(by('EXAMPLE TRADING COMPANY').category, 'salary');
+  assert.equal(by('سالم').category, 'housing'); // transfer note says rent
+  assert.equal(by('Bank charges').category, 'bank_fees');
+  assert.ok(d.transactions.some((t) => t.raw_category === 'loan_installment' && t.category === 'financing'));
+  assert.equal(Core.importStatement(d, rows).inserted, 0);
+});

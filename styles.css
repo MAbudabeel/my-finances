@@ -301,3 +301,4 @@ td.num .tx-desc { text-align: right; }
 .gate-links { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; }
 .ask-warn { color: #8a5a00; background: #fff4d6; }
 .ask-warn::after { content: " ›"; }
+.stmt-row { margin: 10px 0 0; }

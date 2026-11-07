@@ -690,6 +690,37 @@
     });
   }
 
+  // ---------- statement PDF ----------
+  var dayFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'Asia/Riyadh' });
+  function fmtDay(d) { return dayFmt.format(new Date(d + 'T12:00:00+03:00')); }
+  function onStatementFile() {
+    var file = $('stmt-file').files && $('stmt-file').files[0];
+    $('stmt-file').value = '';
+    if (!file) return;
+    var box = $('import-result');
+    box.textContent = 'Reading the statement…'; box.dataset.tone = ''; box.hidden = false;
+    $('stmt-btn').disabled = true;
+    window.FinStatement.read(file).then(function (items) {
+      var rows = Core.statementRows(items);
+      if (!rows.length) {
+        box.textContent = "Couldn't find transactions in that PDF. Use the account statement (كشف حساب) from the Al Rajhi app.";
+        box.dataset.tone = 'warn'; return;
+      }
+      var r = Core.importStatement(data, rows);
+      var parts = [r.inserted ? 'Added ' + r.inserted + ' transaction' + (r.inserted === 1 ? '' : 's') + ' from the statement' + (r.from ? ' (' + fmtDay(r.from) + ' to ' + fmtDay(r.to) + ').' : '.') : 'Nothing new in that statement.'];
+      if (r.matched) parts.push(r.matched + ' were already added from your texts.');
+      if (r.duplicates) parts.push(r.duplicates + ' already imported.');
+      if (r.skipped) parts.push(r.skipped + ' could not be read.');
+      box.textContent = parts.join(' ');
+      box.dataset.tone = r.inserted ? 'good' : '';
+      if (r.inserted) { persist(); renderAll(); }
+    }).catch(function (err) {
+      console.warn(err);
+      box.textContent = err && err.code === 'PASSWORD' ? 'That PDF is password-protected. Save it without a password and try again.' : "Couldn't read that file. Pick the statement PDF from Files.";
+      box.dataset.tone = 'warn';
+    }).then(function () { $('stmt-btn').disabled = false; box.hidden = false; });
+  }
+
   function openType() { $('type-text').value = ''; openDialog('dlg-type'); setTimeout(function () { $('type-text').focus(); }, 50); }
 
   // ---------- backup ----------
@@ -995,6 +1026,8 @@
     });
 
     $('shops-btn').addEventListener('click', openShops);
+    $('stmt-btn').addEventListener('click', function () { if (demo) return; $('stmt-file').click(); });
+    $('stmt-file').addEventListener('change', onStatementFile);
     $('face-btn').addEventListener('click', onFace);
     $('lock-use-pass').addEventListener('click', function () { setLockMode('password', hasQuick); $('lock-pass').focus(); });
     $('quick-face').addEventListener('click', onQuickFace);

@@ -299,27 +299,27 @@
     ['housing', ['rent', 'إيجار', 'ايجار', 'ejar', 'real estate', 'عقار', 'sakani', 'سكني', 'owners association', 'اتحاد ملاك', 'rental', 'rent payment', 'إيجار شقة', 'apartment rent', 'villa rent', 'sakan', 'سكن', 'maintenance fee', 'رسوم صيانة', 'service charge', 'compound', 'كمباوند', 'dar al arkan', 'دار الأركان', 'roshn', 'روشن', 'retal', 'ريتال']],
     ['charity', ['zakat', 'زكاة', 'ehsan', 'إحسان', 'charity', 'صدقة', 'donation', 'تبرع', 'jood', 'خيرية', 'خيري', 'kafalah', 'كفالة', 'waqf', 'وقف', 'ehsan.sa', 'sadaqa', 'صدقات', 'zakat al fitr', 'زكاة الفطر', 'adahi', 'أضاحي', 'udhiyah', 'أضحية', 'orphan', 'أيتام', 'mosque', 'مسجد', 'جامع', 'quran association', 'جمعية تحفيظ', 'bunyan', 'بنيان', 'ensan', 'إنسان', 'al birr', 'البر', 'tarahum', 'تراحم', 'sila', 'food bank', 'بنك الطعام', 'eta3m', 'إطعام', 'furijat', 'فرجت']],
     ['transfer', ['transfer', 'تحويل', 'حوالة', 'sarie', 'سريع', 'stc pay', 'stcpay', 'stc bank', 'urpay', 'own account', 'internal transfer', 'credit card payment', 'سداد بطاقة', 'barq', 'برق', 'alinma pay', 'd360', 'wise']],
-    ['subscriptions', ['netflix', 'shahid', 'شاهد', 'spotify', 'anghami', 'أنغامي', 'osn', 'starzplay', 'starz play', 'disney', 'youtube premium', 'youtube', 'apple.com/bill', 'apple.com', 'itunes', 'icloud', 'apple music', 'google one', 'google storage', 'google *', 'google play', 'amazon prime', 'primevideo', 'prime video', 'openai', 'chatgpt', 'anthropic', 'claude.ai', 'perplexity', 'midjourney', 'github', 'notion', 'grammarly', 'zoom.us', 'microsoft', 'xbox', 'playstation', 'psn', 'nintendo', 'adobe', 'canva', 'dropbox', 'linkedin', 'duolingo', 'crunchyroll', 'weyyak', 'tod tv', 'stc tv', 'jawwy tv', 'beinsports', 'bein', 'audible', 'kindle unl', 'snapchat', 'nordvpn', 'expressvpn', 'surfshark', 'fitness time', 'fitnesstime', 'وقت اللياقة', "gold's gym", 'golds gym', 'leejam', 'لجام', 'nuvola', 'armah', 'body masters', 'gym', 'نادي رياضي', 'spotify ab', 'netflix.com', 'shahid vip', 'osn+', 'tod', 'yango', 'apple tv', 'hbo', 'paramount', 'discovery+', 'bein connect', 'icloud storage', 'google workspace', 'office 365', 'microsoft 365', 'chatgpt plus', 'claude pro', 'gemini', 'copilot', 'telegram premium', 'x premium', 'twitter blue', 'discord nitro', 'patreon', 'onlyfans', 'medium', 'substack', 'calm', 'headspace', 'strava', 'fitbod', 'myfitnesspal', 'peloton', 'noon one', 'careem plus', 'jahez plus', 'hungerstation pro', 'keeta pro', 'amazon music', 'deezer', 'soundcloud', 'tidal']],
+    ['subscriptions', ['netflix', 'shahid', 'شاهد', 'spotify', 'anghami', 'أنغامي', 'osn', 'starzplay', 'starz play', 'disney', 'youtube premium', 'youtube', 'apple.com/bill', 'apple.com', 'itunes', 'icloud', 'apple music', 'google one', 'google storage', 'google *', 'google play', 'amazon prime', 'primevideo', 'prime video', 'openai', 'chatgpt', 'anthropic', 'claude.ai', 'perplexity', 'midjourney', 'github', 'notion', 'grammarly', 'zoom.us', 'microsoft', 'xbox', 'playstation', 'psn', 'nintendo', 'adobe', 'canva', 'dropbox', 'linkedin', 'duolingo', 'crunchyroll', 'weyyak', 'tod tv', 'stc tv', 'jawwy tv', 'beinsports', 'bein', 'audible', 'kindle unl', 'snapchat', 'nordvpn', 'expressvpn', 'surfshark', 'fitness time', 'fitnesstime', 'وقت اللياقة', "gold's gym", 'golds gym', 'leejam', 'لجام', 'nuvola', 'armah', 'body masters', 'gym', 'نادي رياضي', 'spotify ab', 'netflix.com', 'shahid vip', 'osn+', 'tod', 'yango', 'apple tv', 'hbo', 'paramount', 'discovery+', 'bein connect', 'icloud storage', 'google workspace', 'office 365', 'microsoft 365', 'chatgpt plus', 'claude pro', 'gemini', 'copilot', 'telegram premium', 'x premium', 'twitter blue', 'discord nitro', 'patreon', 'onlyfans', 'medium', 'substack', 'calm', 'headspace', 'strava', 'fitbod', 'myfitnesspal', 'peloton', 'noon one', 'careem plus', 'jahez plus', 'hungerstation pro', 'keeta pro', 'amazon music', 'deezer', 'soundcloud', 'tidal', 'iptv', 'tvplayers']],
     ['bills', ['saudi electricity', 'الكهرباء', 'كهرباء', 'مياه', 'sec bill', 'national water', 'المياه', 'nwc', 'stc', 'mobily', 'موبايلي', 'zain', 'زين', 'virgin mobile', 'lebara', 'salam mobile', 'friendi', 'redbull mobile', 'yaqoot', 'sawa', 'jawwy', 'internet', 'fiber', 'سداد فاتورة', 'bill payment', 'sadad bill', 'فاتورة', 'sec ', 'الشركة السعودية للكهرباء', 'marafiq', 'مرافق', 'water bill', 'electricity', 'telecom', 'اتصالات', 'mobile bill', 'prepaid', 'recharge', 'شحن رصيد', 'sawa card', 'بطاقة سوا', 'salam', 'go telecom', 'gotelecom', 'integrated telecom', 'dawiyat', 'ضوئيات', 'gas cylinder', 'غاز']],
     ['government', ['absher', 'أبشر', 'moi', 'وزارة الداخلية', 'muqeem', 'مقيم', 'traffic', 'مخالفة', 'المرور', 'passport', 'الجوازات', 'jawazat', 'iqama', 'إقامة', 'balady', 'بلدي', 'بلدية', 'amanah', 'أمانة', 'municipality', 'najiz', 'ناجز', 'محكمة', 'zatca', 'gosi', 'qiwa', 'قوى', 'musaned', 'مساند', 'efaa', 'إيفاء', 'enjaz', 'tasheel', 'تسهيل', 'chamber of commerce', 'الغرفة التجارية', 'sadad moi', 'government', 'حكومي', 'ministry', 'وزارة', 'moj', 'وزارة العدل', 'mol', 'hrsd', 'وزارة الموارد', 'mohre', 'tawakkalna', 'سجل تجاري', 'commercial registration', 'mci', 'وزارة التجارة', 'saber', 'سابر', 'ncar', 'sfda', 'الغذاء والدواء', 'spa ', 'الموانئ', 'customs', 'الجمارك', 'zakat tax', 'الزكاة والضريبة', 'fines', 'غرامة', 'غرامات', 'violation', 'دفع المخالفات', 'najm traffic', 'saher', 'ساهر', 'driving license', 'رخصة', 'istimara', 'استمارة', 'civil affairs', 'الأحوال المدنية', 'ahwal']],
     ['cash', ['atm', 'cash withdrawal', 'سحب نقدي', 'سحب']],
     ['bank_fees', ['fee', 'fees', 'رسوم', 'commission', 'عمولة', 'vat on fee', 'annual fee']],
-    ['groceries', ['panda', 'بنده', 'danube', 'الدانوب', 'tamimi', 'التميمي', 'othaim', 'العثيم', 'carrefour', 'كارفور', 'lulu', 'لولو', 'nesto', 'bindawood', 'bin dawood', 'بن داود', 'farm superstores', 'المزرعة', 'al raya', 'alraya', 'الراية', 'al sadhan', 'السدحان', 'manuel', 'spar', 'hyper', 'هايبر', 'supermarket', 'super market', 'سوبرماركت', 'سوبر ماركت', 'mini market', 'minimarket', 'market', 'ماركت', 'aswaq', 'أسواق', 'tamweenat', 'tamwinat', 'تموينات', 'baqala', 'baqalah', 'bakala', 'bqala', 'بقالة', 'بقاله', 'foodstuff', 'food stuff', 'مواد غذائية', 'grocery', 'groceries', 'ninja', 'نينجا', 'nana', 'نعناع', 'butcher', 'ملحمة', 'لحوم', 'خضار', 'فواكه', 'vegetable', 'تمور', 'nova water', 'berain', 'بيرين', 'water delivery', 'mark & save', 'mark and save', 'ramez', 'رامز', 'grand hyper', 'hyper al wafa', 'sarawat', 'سراوات', 'zad', 'al nahdi markets', 'carrefour market', 'spinneys', 'waitrose', 'choithrams', 'danube express', 'nesto hyper', 'lulu express', 'ghazal', 'al jazera', 'supermarkets', 'hypermarket', 'هايبر ماركت', 'dukan', 'دكان', 'bnoon', 'إنعام', 'mart', 'مارت', 'fresh', 'طازج', 'almarai', 'المراعي', 'nadec', 'نادك', 'sadafco', 'alwatania', 'الوطنية للدواجن', 'mazraa', 'مزرعة', 'dates', 'تمر', 'samaya', 'رطب', 'bateel']],
+    ['groceries', ['panda', 'بنده', 'danube', 'الدانوب', 'tamimi', 'التميمي', 'othaim', 'العثيم', 'carrefour', 'كارفور', 'lulu', 'لولو', 'nesto', 'bindawood', 'bin dawood', 'بن داود', 'farm superstores', 'المزرعة', 'al raya', 'alraya', 'الراية', 'al sadhan', 'السدحان', 'manuel', 'spar', 'hyper', 'هايبر', 'supermarket', 'super market', 'سوبرماركت', 'سوبر ماركت', 'mini market', 'minimarket', 'market', 'ماركت', 'aswaq', 'أسواق', 'tamweenat', 'tamwinat', 'تموينات', 'baqala', 'baqalah', 'bakala', 'bqala', 'بقالة', 'بقاله', 'foodstuff', 'food stuff', 'مواد غذائية', 'grocery', 'groceries', 'ninja', 'نينجا', 'nana', 'نعناع', 'butcher', 'ملحمة', 'لحوم', 'خضار', 'فواكه', 'vegetable', 'تمور', 'nova water', 'berain', 'بيرين', 'water delivery', 'mark & save', 'mark and save', 'ramez', 'رامز', 'grand hyper', 'hyper al wafa', 'sarawat', 'سراوات', 'zad', 'al nahdi markets', 'carrefour market', 'spinneys', 'waitrose', 'choithrams', 'danube express', 'nesto hyper', 'lulu express', 'ghazal', 'al jazera', 'supermarkets', 'hypermarket', 'هايبر ماركت', 'dukan', 'دكان', 'bnoon', 'إنعام', 'mart', 'مارت', 'fresh', 'طازج', 'almarai', 'المراعي', 'nadec', 'نادك', 'sadafco', 'alwatania', 'الوطنية للدواجن', 'mazraa', 'مزرعة', 'dates', 'تمر', 'samaya', 'رطب', 'bateel', 'monoprix', 'lulu hyper', 'al meera']],
     ['coffee', ['starbucks', 'ستاربكس', 'dunkin', 'tim hortons', 'barns', 'بارنز', 'half million', 'كوفي', 'coffee', 'cafe', 'café', 'كافيه', 'قهوة', 'محمصة', 'roaster', 'roastery', 'dr.cafe', 'dr cafe', 'costa', 'caribou', 'brew92', 'brew 92', 'overdose', 'arabica', 'joffee', 'dose', 'kyan', 'elixir bunn', 'camel step', 'specialty', 'espresso', 'krispy kreme', 'cafe bateel', 'medd', 'kif', 'draft cafe', 'barista', 'باريستا', 'tea', 'شاي', 'chai', 'karak', 'كرك', 'juice', 'عصير', 'عصائر', 'kaffeine', 'khobar coffee', 'mocha', 'موكا', 'latte', 'brew', 'coffe', 'cofe', 'kafe', 'kafeh', 'قهوه', 'الكوفي', 'crumbs', 'pinkberry', 'cheesecake factory']],
-    ['dining', ['albaik', 'al baik', 'البيك', 'kudu', 'كودو', 'herfy', 'هرفي', 'mcdonald', 'ماكدونالدز', 'burger king', 'kfc', 'popeyes', 'hardee', 'texas chicken', 'pizza', 'بيتزا', 'papa john', 'little caesar', 'domino', 'subway', 'shake shack', 'five guys', 'maestro', 'shawarma', 'شاورما', 'shawarmer', 'شاورمر', 'mama noura', 'ماما نورة', 'al tazaj', 'الطازج', 'romansiah', 'الرومانسية', 'najd village', 'قرية نجد', 'burgerizzr', 'burger', 'برجر', 'chicken', 'broast', 'بروست', 'grill', 'مشويات', 'steak', 'mandi', 'مندي', 'kabsa', 'كبسة', 'restaurant', 'resturant', 'مطعم', 'مطاعم', 'mataam', 'matam', 'مطبخ', 'kitchen', 'buffet', 'بوفيه', 'بوفية', 'bakery', 'مخبز', 'مخابز', 'sweets', 'حلويات', 'dessert', 'ice cream', 'baskin', 'cinnabon', 'hungerstation', 'hungerst', 'هنقرستيشن', 'jahez', 'جاهز', 'mrsool', 'مرسول', 'toyou', 'to you', 'keeta', 'كيتا', 'the chefz', 'chefz', 'careem food', 'talabat', 'food', 'shawaya house', 'بيت الشواية', 'burger fuel', 'section-b', 'takya', 'nozomi', 'myazu', 'il baretto', 'piatto', 'copper branch', 'lusin', 'fuddruckers', 'applebee', 'chili\'s', 'tgi', 'nando', 'wingstop', 'buffalo wild', 'johnny rockets', 'hardees', 'dajen', 'داجن', 'al shorfa', 'sushi', 'سوشي', 'noodle', 'ramen', 'asian', 'thai', 'indian', 'biryani', 'برياني', 'zaatar', 'زعتر', 'fatayer', 'فطائر', 'mutabbaq', 'مطبق', 'manakish', 'مناقيش', 'falafel', 'فلافل', 'foul', 'فول', 'tamees', 'تميس', 'luqaimat', 'لقيمات', 'kunafa', 'كنافة', 'saadeddin', 'سعد الدين', 'abu zaid', 'kabab', 'كباب', 'مشاوي', 'grills', 'fried', 'وجبات', 'meals', 'eatery', 'diner', 'cafeteria', 'كافتيريا', 'كفتيريا', 'canteen', 'shake', 'smoothie', 'donut', 'دونات', 'waffle', 'وافل', 'crepe', 'كريب', 'pancake', 'tacos', 'taco', 'pasta', 'باستا', 'sandwich', 'ساندويتش', 'fast food', 'ferjan', 'فريج', 'najdiyat', 'نجديات', 'mathbi', 'مثبي', 'mandi house', 'haneeth', 'حنيذ', 'madghoot', 'مضغوط']],
+    ['dining', ['albaik', 'al baik', 'البيك', 'kudu', 'كودو', 'herfy', 'هرفي', 'mcdonald', 'ماكدونالدز', 'burger king', 'kfc', 'popeyes', 'hardee', 'texas chicken', 'pizza', 'بيتزا', 'papa john', 'little caesar', 'domino', 'subway', 'shake shack', 'five guys', 'maestro', 'shawarma', 'شاورما', 'shawarmer', 'شاورمر', 'mama noura', 'ماما نورة', 'al tazaj', 'الطازج', 'romansiah', 'الرومانسية', 'najd village', 'قرية نجد', 'burgerizzr', 'burger', 'برجر', 'chicken', 'broast', 'بروست', 'grill', 'مشويات', 'steak', 'mandi', 'مندي', 'kabsa', 'كبسة', 'restaurant', 'resturant', 'مطعم', 'مطاعم', 'mataam', 'matam', 'مطبخ', 'kitchen', 'buffet', 'بوفيه', 'بوفية', 'bakery', 'مخبز', 'مخابز', 'sweets', 'حلويات', 'dessert', 'ice cream', 'baskin', 'cinnabon', 'hungerstation', 'hungerst', 'هنقرستيشن', 'jahez', 'جاهز', 'mrsool', 'مرسول', 'toyou', 'to you', 'keeta', 'كيتا', 'the chefz', 'chefz', 'careem food', 'talabat', 'food', 'shawaya house', 'بيت الشواية', 'burger fuel', 'section-b', 'takya', 'nozomi', 'myazu', 'il baretto', 'piatto', 'copper branch', 'lusin', 'fuddruckers', 'applebee', 'chili\'s', 'tgi', 'nando', 'wingstop', 'buffalo wild', 'johnny rockets', 'hardees', 'dajen', 'داجن', 'al shorfa', 'sushi', 'سوشي', 'noodle', 'ramen', 'asian', 'thai', 'indian', 'biryani', 'برياني', 'zaatar', 'زعتر', 'fatayer', 'فطائر', 'mutabbaq', 'مطبق', 'manakish', 'مناقيش', 'falafel', 'فلافل', 'foul', 'فول', 'tamees', 'تميس', 'luqaimat', 'لقيمات', 'kunafa', 'كنافة', 'saadeddin', 'سعد الدين', 'abu zaid', 'kabab', 'كباب', 'مشاوي', 'grills', 'fried', 'وجبات', 'meals', 'eatery', 'diner', 'cafeteria', 'كافتيريا', 'كفتيريا', 'canteen', 'shake', 'smoothie', 'donut', 'دونات', 'waffle', 'وافل', 'crepe', 'كريب', 'pancake', 'tacos', 'taco', 'pasta', 'باستا', 'sandwich', 'ساندويتش', 'fast food', 'ferjan', 'فريج', 'najdiyat', 'نجديات', 'mathbi', 'مثبي', 'mandi house', 'haneeth', 'حنيذ', 'madghoot', 'مضغوط', 'snoonu', 'qlub', 'cheef', 'chef', 'chefs', 'sweet', 'lounge', 'nakhah', 'نكهة']],
     ['fuel', ['aldrees', 'al drees', 'الدريس', 'sasco', 'ساسكو', 'petromin', 'بترومين', 'naft', 'نفط', 'fuel', 'وقود', 'petrol', 'بنزين', 'gasoline', 'gas station', 'محطة', 'mahatta', 'mahattat', 'محطات', 'station', 'stations', 'aramco', 'أرامكو', 'al bassam', 'البسام', 'sahel', 'ساحل', 'gas', 'محروقات', 'tasweeq', 'petrol station', 'fuel station', 'adnoc', 'benzine', 'benzin', 'diesel', 'ديزل']],
     ['car', ['najm', 'نجم', 'car wash', 'carwash', 'غسيل سيارات', 'مغسلة سيارات', 'car service', 'oil change', 'تغيير زيت', 'زيوت', 'tire', 'tyre', 'كفرات', 'إطارات', 'spare parts', 'auto parts', 'قطع غيار', 'workshop', 'ورشة', 'mvpi', 'فحص دوري', 'tameeni', 'تأميني', 'bcare', 'abdul latif jameel', 'jameel motors', 'toyota', 'hyundai', 'nissan', 'lexus', 'kia', 'honda', 'chevrolet', 'gmc', 'mazda', 'tasjeel', 'car care', 'auto care', 'autocare', 'motors', 'motor', 'سيارات', 'الجميح', 'aljomaih', 'abdul latif', 'alj ', 'petromin express', 'tamkeen', 'car insurance', 'تأمين سيارات', 'malath', 'ملاذ', 'al rajhi takaful', 'takaful', 'تكافل', 'tire shop', 'balancing', 'ميزان', 'بنشر', 'puncture', 'cardoc', 'towing', 'سطحة', 'satha', 'car accessories', 'زينة سيارات', 'tint', 'تظليل', 'detailing', 'تلميع', 'polish']],
-    ['transport', ['uber', 'careem', 'كريم', 'bolt', 'jeeny', 'جيني', 'saptco', 'سابتكو', 'riyadh metro', 'metro', 'riyadh bus', 'darb', 'parking', 'مواقف', 'mawaqif', 'yelo', 'theeb', 'ذيب', 'budget rent', 'lumi', 'key car', 'hanco', 'rent a car', 'تأجير سيارات', 'salik', 'toll', 'taxi', 'تاكسي', 'kaiian', 'swvl', 'bus', 'باص', 'حافلات', 'metro riyadh', 'careem bike', 'uber eats']],
+    ['transport', ['uber', 'careem', 'كريم', 'bolt', 'jeeny', 'جيني', 'saptco', 'سابتكو', 'riyadh metro', 'metro', 'riyadh bus', 'darb', 'parking', 'مواقف', 'mawaqif', 'yelo', 'theeb', 'ذيب', 'budget rent', 'lumi', 'key car', 'hanco', 'rent a car', 'تأجير سيارات', 'salik', 'toll', 'taxi', 'تاكسي', 'kaiian', 'swvl', 'bus', 'باص', 'حافلات', 'metro riyadh', 'careem bike', 'uber eats', 'karwa', 'mowasalat', 'كروة']],
     ['travel', ['saudia', 'السعودية للطيران', 'riyadh air', 'flynas', 'طيران ناس', 'flyadeal', 'طيران أديل', 'flydubai', 'emirates', 'etihad', 'qatar airways', 'gulf air', 'turkish airlines', 'egyptair', 'airline', 'airways', 'booking.com', 'agoda', 'expedia', 'trip.com', 'airbnb', 'almosafer', 'المسافر', 'tajawal', 'wego', 'rehlat', 'flyin', 'gathern', 'جاذر', 'hotel', 'فندق', 'resort', 'منتجع', 'chalet', 'شاليه', 'marriott', 'hilton', 'hyatt', 'radisson', 'novotel', 'ibis', 'movenpick', 'intercontinental', 'holiday inn', 'sar railway', 'haramain', 'قطار', 'nusuk', 'نسك', 'umrah', 'عمرة', 'duty free', 'saudia airlines', 'saudi airlines', 'nas air', 'flynas.com', 'riyadhair', 'air arabia', 'pegasus', 'oman air', 'kuwait airways', 'british airways', 'lufthansa', 'klm', 'air france', 'jazeera airways', 'middle east airlines', 'royal jordanian', 'hotels.com', 'kayak', 'skyscanner', 'cleartrip', 'musafir', 'holidayme', 'seera', 'سيرة', 'al tayyar', 'الطيار', 'travel', 'سفر', 'سياحة', 'tourism', 'tours', 'visa services', 'vfs', 'tasheer', 'تأشيرة', 'embassy', 'سفارة', 'suite', 'سويت', 'شقق فندقية', 'apartments', 'furnished', 'مفروشة', 'inn', 'lodge', 'crowne plaza', 'sheraton', 'westin', 'four seasons', 'ritz', 'fairmont', 'rosewood', 'shangri-la', 'sofitel', 'pullman', 'mercure', 'swissotel', 'rotana', 'روتانا', 'kempinski', 'jumeirah', 'address', 'millennium', 'golden tulip', 'boudl', 'بودل', 'braira', 'بريرا', 'narcissus', 'نارسيس', 'red sea global', 'alula', 'العلا', 'amaala', 'soudah', 'السودة']],
     ['health', ['nahdi', 'النهدي', 'dawaa', 'الدواء', 'whites', 'pharmacy', 'pharmacies', 'pharma', 'صيدلية', 'صيدليات', 'hospital', 'مستشفى', 'clinic', 'clinics', 'عيادة', 'عيادات', 'medical', 'طبي', 'طبية', 'dental', 'أسنان', 'sulaiman al habib', 'hmg', 'الحبيب', 'dallah', 'mouwasat', 'المواساة', 'saudi german', 'مستوصف', 'polyclinic', 'laboratory', 'lab', 'مختبر', 'optic', 'optics', 'نظارات', 'magrabi', 'المغربي', 'tawuniya', 'bupa', 'بوبا', 'medgulf', 'orange pharmacy', 'صيدليات أورانج', 'united pharmacy', 'kunooz', 'كنوز', 'al-nahdi', 'dr.', 'doctor', 'dr ', 'دكتور', 'physio', 'علاج طبيعي', 'dermatology', 'جلدية', 'eye', 'عيون', 'vision', 'optical', 'بصريات', 'hearing', 'dentist', 'orthodont', 'تقويم', 'vaccin', 'تطعيم', 'fakeeh', 'فقيه', 'almana', 'المانع', 'kfsh', 'king faisal specialist', 'national guard hospital', 'care medical', 'رعاية', 'dr sulaiman', 'sghgroup', 'saudi german hospital', 'al hammadi', 'الحمادي', 'dr. sulaiman', 'medical center', 'مجمع طبي', 'مركز طبي', 'labs', 'al borg', 'البرج', 'delta medical', 'دلتا', 'seha', 'صحة', 'tabeeb', 'طبيب', 'vezeeta', 'cura', 'كيورا', 'altibbi', 'الطبي']],
     ['personal_care', ['barber', 'barbershop', 'حلاق', 'حلاقة', 'salon', 'صالون', 'مشغل', 'beauty', 'تجميل', 'laundry', 'مغسلة', 'مصبغة', 'dry clean', 'perfume', 'perfumes', 'عطور', 'oud', 'عود', 'arabian oud', 'العربية للعود', 'qurashi', 'القرشي', 'ajmal', 'rasasi', 'الرصاصي', 'sephora', 'nice one', 'نايس ون', 'golden scent', 'faces', 'وجوه', 'bath & body', 'cosmetic', 'cosmetics', 'spa', 'abdul samad', 'عبدالصمد', 'oud milano', 'swiss arabian', 'lattafa', 'لطافة', 'nabeel', 'al majed oud', 'الماجد للعود', 'dkhoon', 'دخون', 'bakhoor', 'بخور', 'mikyajy', 'مكياجي', 'kayali', 'bath and body', 'body shop', 'the body shop', 'huda beauty', 'boots', 'بوتس', 'nails', 'nail', 'أظافر', 'hair', 'شعر', 'men salon', 'gents', 'massage', 'مساج', 'hammam', 'حمام مغربي', 'wax', 'threading', 'حناء', 'henna', 'tailor', 'خياط', 'خياطة', 'tailoring', 'alteration', 'dry cleaning', 'مكوى', 'كوي', 'ironing', 'washing', 'غسيل ملابس']],
     ['education', ['school', 'schools', 'مدرسة', 'مدارس', 'university', 'جامعة', 'academy', 'أكاديمية', 'institute', 'معهد', 'kindergarten', 'nursery', 'حضانة', 'روضة', 'course', 'udemy', 'coursera', 'tuition', 'training', 'تدريب', 'noon academy', 'نون أكاديمي', 'madrasati', 'classera', 'rawdah', 'قرآن', 'تحفيظ', 'tutor', 'tutoring', 'مدرس خصوصي', 'دروس', 'lessons', 'ielts', 'toefl', 'british council', 'berlitz', 'wall street english', 'language', 'لغة', 'لغات', 'qiyas', 'قياس', 'etec', 'هيئة تقويم', 'كتب', 'kitabi']],
     ['entertainment', ['cinema', 'cinemas', 'vox', 'muvi', 'amc', 'reel cinemas', 'سينما', 'webook', 'tazkarti', 'boulevard', 'بوليفارد', 'riyadh season', 'موسم', 'qiddiya', 'sparkys', 'snow city', 'bowling', 'escape room', 'theme park', 'steam', 'midasbuy', 'razer gold', 'pubg', 'game', 'games', 'six flags', 'al hokair', 'الحكير', 'sparky', 'fun city', 'فن سيتي', 'magic planet', 'kidzania', 'كيدزانيا', 'trampoline', 'ترامبولين', 'karting', 'go kart', 'كارتينج', 'paintball', 'zoo', 'حديقة حيوان', 'museum', 'متحف', 'exhibition', 'معرض', 'concert', 'حفل', 'tickets', 'تذاكر', 'ticketmaster', 'platinumlist', 'events', 'فعاليات', 'festival', 'مهرجان', 'park', 'منتزه', 'playstation store', 'nintendo eshop', 'epic games', 'roblox', 'fortnite', 'free fire', 'pubg mobile', 'jawaker', 'جواكر', 'yalla ludo', 'ludo', 'genshin', 'clash', 'supercell', 'razer']],
-    ['home', ['ikea', 'ايكيا', 'home centre', 'homecentre', 'home center', 'saco', 'ساكو', 'ace hardware', 'abyat', 'أبيات', 'pan emirates', 'homes r us', 'al muhaidib', 'المهيدب', 'furniture', 'أثاث', 'مفروشات', 'hardware', 'أدوات منزلية', 'household', 'carpet', 'سجاد', 'mattress', 'مراتب', 'lighting', 'إنارة', 'cleaning', 'تنظيف', 'سباكة', 'home box', 'homebox', 'danube home', 'داينوب هوم', 'al rugaib', 'الرقيب', 'midas furniture', 'ميداس', 'raghba', 'رغبة', 'pottery barn', 'west elm', 'safat home', 'jysk', 'اثاث', 'مطابخ', 'kitchens', 'appliances', 'أجهزة منزلية', 'electrical', 'كهربائيات', 'أدوات كهربائية', 'paint', 'دهانات', 'jotun', 'جوتن', 'national paints', 'tools', 'عدد وأدوات', 'نجارة', 'carpentry', 'ألمنيوم', 'aluminium', 'glass', 'زجاج', 'curtain', 'ستائر', 'plants', 'نباتات', 'nursery plant', 'مشتل', 'garden', 'حديقة', 'pest', 'مكافحة حشرات', 'maid', 'عاملة', 'khadamat', 'خدمات منزلية']],
-    ['shopping', ['amazon', 'أمازون', 'noon', 'نون', 'namshi', 'نمشي', 'trendyol', 'ounass', 'styli', 'sivvi', 'jarir', 'جرير', 'extra', 'اكسترا', 'shein', 'شي ان', 'centrepoint', 'centerpoint', 'h&m', 'zara', 'bershka', 'lefties', 'max fashion', 'redtag', 'red tag', 'splash', 'lc waikiki', 'defacto', 'nike', 'adidas', 'sun & sand', 'sun and sand', 'decathlon', 'toys r us', 'hamleys', 'mothercare', 'babyshop', 'aliexpress', 'temu', 'apple store', 'virgin megastore', 'blackbox', 'black box', 'mall', 'مول', 'store', 'متجر', 'boutique', 'fashion', 'أزياء', 'ملابس', 'عبايات', 'abaya', 'extra stores', 'x-cite', 'eros', 'emax', 'sharaf dg', 'apple', 'iphone', 'samsung', 'huawei', 'xiaomi', 'lenovo', 'dell', 'hp ', 'electronics', 'الكترونيات', 'إلكترونيات', 'mobile shop', 'جوالات', 'جوال', 'accessories', 'اكسسوارات', 'gift', 'هدايا', 'flowers', 'ورود', 'زهور', 'florist', 'toys', 'ألعاب', 'toy', 'kids', 'أطفال', 'baby', 'مواليد', 'shoes', 'أحذية', 'حذاء', 'bags', 'حقائب', 'watch', 'ساعات', 'jewel', 'مجوهرات', 'ذهب', 'gold', 'لازوردي', 'lazurde', 'damas', 'داماس', 'al-fardan', 'optical store', 'bookstore', 'مكتبة', 'library', 'stationery', 'قرطاسية', 'pubs', 'sporting', 'sports', 'رياضة', 'marks & spencer', 'marks and spencer', 'debenhams', 'new look', 'next', 'gap', 'mango', 'massimo dutti', 'pull&bear', 'stradivarius', 'uniqlo', 'american eagle', 'aldo', 'charles & keith', 'skechers', 'puma', 'under armour', 'levi', 'tommy', 'calvin', 'guess', 'lacoste', 'miniso', 'ميniso', 'daiso', 'دايسو', 'ikea', 'al-othaim mall', 'نخيل مول', 'panorama', 'بانوراما', 'red sea mall', 'granada', 'غرناطة', 'riyadh park', 'الرياض بارك', 'kingdom centre', 'al nakheel', 'hayat mall', 'حياة مول', 'u walk', 'via riyadh', 'outlet', 'souq', 'سوق', 'bazaar', 'dukkan', 'online store']]
+    ['home', ['ikea', 'ايكيا', 'home centre', 'homecentre', 'home center', 'saco', 'ساكو', 'ace hardware', 'abyat', 'أبيات', 'pan emirates', 'homes r us', 'al muhaidib', 'المهيدب', 'furniture', 'أثاث', 'مفروشات', 'hardware', 'أدوات منزلية', 'household', 'carpet', 'سجاد', 'mattress', 'مراتب', 'lighting', 'إنارة', 'cleaning', 'تنظيف', 'سباكة', 'home box', 'homebox', 'danube home', 'داينوب هوم', 'al rugaib', 'الرقيب', 'midas furniture', 'ميداس', 'raghba', 'رغبة', 'pottery barn', 'west elm', 'safat home', 'jysk', 'اثاث', 'مطابخ', 'kitchens', 'appliances', 'أجهزة منزلية', 'electrical', 'كهربائيات', 'أدوات كهربائية', 'paint', 'دهانات', 'jotun', 'جوتن', 'national paints', 'tools', 'عدد وأدوات', 'نجارة', 'carpentry', 'ألمنيوم', 'aluminium', 'glass', 'زجاج', 'curtain', 'ستائر', 'plants', 'نباتات', 'nursery plant', 'مشتل', 'garden', 'حديقة', 'pest', 'مكافحة حشرات', 'maid', 'عاملة', 'khadamat', 'خدمات منزلية', 'almnzl', 'al manzil', 'المنزل']],
+    ['shopping', ['amazon', 'أمازون', 'noon', 'نون', 'namshi', 'نمشي', 'trendyol', 'ounass', 'styli', 'sivvi', 'jarir', 'جرير', 'extra', 'اكسترا', 'shein', 'شي ان', 'centrepoint', 'centerpoint', 'h&m', 'zara', 'bershka', 'lefties', 'max fashion', 'redtag', 'red tag', 'splash', 'lc waikiki', 'defacto', 'nike', 'adidas', 'sun & sand', 'sun and sand', 'decathlon', 'toys r us', 'hamleys', 'mothercare', 'babyshop', 'aliexpress', 'temu', 'apple store', 'virgin megastore', 'blackbox', 'black box', 'mall', 'مول', 'store', 'متجر', 'boutique', 'fashion', 'أزياء', 'ملابس', 'عبايات', 'abaya', 'extra stores', 'x-cite', 'eros', 'emax', 'sharaf dg', 'iphone', 'samsung', 'huawei', 'xiaomi', 'lenovo', 'dell', 'hp ', 'electronics', 'الكترونيات', 'إلكترونيات', 'mobile shop', 'جوالات', 'جوال', 'accessories', 'اكسسوارات', 'gift', 'هدايا', 'flowers', 'ورود', 'زهور', 'florist', 'toys', 'ألعاب', 'toy', 'kids', 'أطفال', 'baby', 'مواليد', 'shoes', 'أحذية', 'حذاء', 'bags', 'حقائب', 'watch', 'ساعات', 'jewel', 'مجوهرات', 'ذهب', 'gold', 'لازوردي', 'lazurde', 'damas', 'داماس', 'al-fardan', 'optical store', 'bookstore', 'مكتبة', 'library', 'stationery', 'قرطاسية', 'pubs', 'sporting', 'sports', 'رياضة', 'marks & spencer', 'marks and spencer', 'debenhams', 'new look', 'next', 'gap', 'mango', 'massimo dutti', 'pull&bear', 'stradivarius', 'uniqlo', 'american eagle', 'aldo', 'charles & keith', 'skechers', 'puma', 'under armour', 'levi', 'tommy', 'calvin', 'guess', 'lacoste', 'miniso', 'ميniso', 'daiso', 'دايسو', 'ikea', 'al-othaim mall', 'نخيل مول', 'panorama', 'بانوراما', 'red sea mall', 'granada', 'غرناطة', 'riyadh park', 'الرياض بارك', 'kingdom centre', 'al nakheel', 'hayat mall', 'حياة مول', 'u walk', 'via riyadh', 'outlet', 'souq', 'سوق', 'bazaar', 'dukkan', 'online store', 'harrods', 'zid', 'babies', 'flower', 'alward', 'al ward', 'ups', 'dhl', 'aramex', 'smsa', 'ناقل', 'naqel', 'shipping']]
   ];
   var EMPLOYER_RE = /(company|\bco\b|corp|\bltd\b|limited|\best\b|establishment|group|holding|ministry|شركة|مؤسسة|مجموعة|وزارة|هيئة)/i;
-  var HINTS = { own_transfer: 'transfer', transfer_in: 'transfer', transfer_out: 'transfer', card_payment: 'transfer', fee: 'bank_fees', bill_payment: 'bills' };
+  var HINTS = { loan_installment: 'financing', own_transfer: 'transfer', transfer_in: 'transfer', transfer_out: 'transfer', card_payment: 'transfer', fee: 'bank_fees', bill_payment: 'bills' };
 
   function normalizeText(s) {
     return String(s || '').toLowerCase().normalize('NFKC')
@@ -553,7 +553,7 @@
   }
 
   // Bump when the built-in keywords change, so saved transactions are sorted again with the new list.
-  var CAT_VERSION = 3;
+  var CAT_VERSION = 4;
   /** Re-sort auto-categorized transactions once after an update. Manual choices and rules are kept. Returns true if it ran. */
   function upgradeCategories(data) {
     if ((data.meta && data.meta.cat_version) === CAT_VERSION) return false;
@@ -729,7 +729,10 @@
 
     // Salary: a steady monthly credit of at least 1,500 SAR not already classified.
     var salaryUpdates = 0;
+    // When the bank itself marks payroll, regular transfers from people are not a salary.
+    var hasPayroll = txs.some(function (t) { return t.raw_category === 'salary' && t.amount > 0; });
     creditGroups.forEach(function (credits) {
+      if (hasPayroll) return;
       var auto = credits.filter(function (c) {
         return c.category_source === 'auto' && (c.category === 'income' || (c.category === 'transfer' && c.raw_category === 'transfer_in'));
       });
@@ -903,6 +906,156 @@
     });
   }
 
+
+  // ======================================================================
+  // Al Rajhi account statement (PDF). The app reads the PDF's text on the phone
+  // (js/statement.js); these functions turn its positioned text into transactions.
+  // ======================================================================
+  var STMT_DATE = /^(\d{4})\/(\d{2})\/(\d{2})$/;
+  var STMT_AMOUNT = /^([\d,]+\.\d{2})\s*SAR$/;
+
+  /** items: [{page, x, y, str}] (y grows upwards, as in PDF). Returns rows {date, type, notes, debit, credit, balance}. */
+  function statementRows(items) {
+    var pages = {};
+    items.forEach(function (it) {
+      var s = String(it.str || '').trim();
+      if (!s) return;
+      (pages[it.page] || (pages[it.page] = [])).push({ x: Number(it.x), y: Number(it.y), s: s });
+    });
+    var rows = [];
+    Object.keys(pages).sort(function (a, b) { return a - b; }).forEach(function (pg) {
+      var list = pages[pg];
+      var anchors = list.filter(function (it) { return it.x < 100 && STMT_DATE.test(it.s); })
+        .sort(function (a, b) { return b.y - a.y; });
+      if (!anchors.length) return;
+      var pageRows = anchors.map(function (a) { return { anchor: a, details: [], amounts: [] }; });
+      list.forEach(function (it) {
+        if (anchors.indexOf(it) !== -1) return;
+        // Belongs to the date row closest in height (rows are about 26pt apart; details sit within ±12pt).
+        var best = null, dist = Infinity;
+        pageRows.forEach(function (r) { var d = Math.abs(r.anchor.y - it.y); if (d < dist) { dist = d; best = r; } });
+        if (!best || dist > 16) return;
+        if (STMT_AMOUNT.test(it.s) && Math.abs(best.anchor.y - it.y) <= 3 && it.x > 250) best.amounts.push(it);
+        else if (it.x >= 90 && it.x < 300) best.details.push(it);
+      });
+      pageRows.forEach(function (r) {
+        if (r.amounts.length < 3) return;
+        r.amounts.sort(function (a, b) { return a.x - b.x; });
+        r.details.sort(function (a, b) { return b.y - a.y || a.x - b.x; });
+        var m = r.anchor.s.match(STMT_DATE);
+        var num = function (it) { return Number(it.s.match(STMT_AMOUNT)[1].replace(/,/g, '')); };
+        rows.push({
+          date: m[1] + '-' + m[2] + '-' + m[3],
+          type: r.details.length ? r.details[0].s : '',
+          notes: r.details.slice(1).map(function (d) { return d.s; }).join(' ').replace(/\s+/g, ' ').trim(),
+          debit: num(r.amounts[0]), credit: num(r.amounts[1]), balance: num(r.amounts[2])
+        });
+      });
+    });
+    return rows;
+  }
+
+  var STMT_TYPES = [
+    [/between accounts/i, 'own_transfer'],
+    [/transaction charges|markup|fee|charge/i, 'fee'],
+    [/installment|loan/i, 'loan_installment'],
+    [/credit cards? transactions|card payment/i, 'card_payment'],
+    [/refund|reversal/i, 'refund'],
+    [/sadad|bill/i, 'bill_payment'],
+    [/atm|cash withdrawal/i, 'atm_withdrawal'],
+    [/online purchase|card on file/i, 'online_purchase'],
+    [/pos purchase|purchase/i, 'pos_purchase'],
+    [/inward|incoming/i, 'transfer_in'],
+    [/outward|transfer/i, 'transfer_out']
+  ];
+
+  var CITY_END = /(,\s*|\s+)(riyadh|al riyadh|jeddah|makkah|mecca|madina|medina|dammam|khobar|al khobar|dhahran|abha|taif|tabuk|qassim|buraydah|hail|jazan|najran|doha|dubai|abu dhabi|manama|kuwait|cairo|amsterdam|london|paris|istanbul)$/i;
+  function cleanPlace(s) {
+    var out = String(s || '').replace(/,?\s*[A-Za-z .'-]{2,25},\s*SA$/i, '').replace(/\s+(SA|QA|NL|US|GB|AE|BH|KW|EG|TR|FR|DE)$/, '').replace(/[\s,]+$/, '').trim();
+    for (var i = 0; i < 2; i++) out = out.replace(CITY_END, '').replace(/[\s,]+$/, '').trim();
+    return out;
+  }
+
+  /** One statement row → the same shape the SMS parser makes. */
+  function statementTransaction(row) {
+    var amount = row.credit > 0 ? row.credit : -row.debit;
+    if (!amount) return null;
+    var typeText = row.type || '';
+    var raw = 'other';
+    for (var i = 0; i < STMT_TYPES.length; i++) if (STMT_TYPES[i][0].test(typeText)) { raw = STMT_TYPES[i][1]; break; }
+    if (raw === 'transfer_out' && amount > 0) raw = 'transfer_in';
+    if (/\bLOAN\b|\bINST\./i.test(row.notes) && amount < 0) raw = 'loan_installment';
+    var timeM = row.notes.match(/Time:\s*(\d{2}:\d{2}:\d{2})/);
+    var notes = row.notes.replace(/^.*?Notes:\s*/, '').replace(/W-\s+\//, 'W-/').trim();
+    var who = null, note = null, card = null;
+    var cm = notes.match(/\d{6}\*+(\d{4})/);
+    if (cm) card = cm[1];
+    if (/PAYROLL/i.test(notes)) {
+      raw = 'salary';
+      var parts = notes.split('-').map(function (s) { return s.trim(); }).filter(Boolean);
+      who = parts.filter(function (s) { return EMPLOYER_RE.test(s); })[0] || null;
+    } else if (/^Payment-/i.test(notes)) {
+      var pp = notes.split('-').map(function (s) { return s.trim(); }).filter(Boolean);
+      who = pp.filter(function (s) { return EMPLOYER_RE.test(s); })[0] || pp.filter(function (s) { return /^[A-Za-z .&]{4,}$/.test(s); })[0] || null;
+    } else if (/^W-\/(FR|TO)ACCT\//.test(notes)) {
+      var tm = notes.match(/^W-\/(?:FR|TO)ACCT\/\d+(?:FR|TO)([^-]*)-?(.*)$/);
+      if (tm) { who = tm[1].trim() || null; note = tm[2].trim() || null; }
+    } else if (raw === 'pos_purchase' || raw === 'online_purchase' || raw === 'refund' || /markup/i.test(typeText)) {
+      var mm = notes.replace(/^\([^)]*\)\s*/, '').replace(/^\d{6}\*+\d{4}\s*:\s*/, '').replace(/^(Agmt\s+)?[0-9a-f]{20,}\s*,\s*/i, '')
+        .replace(/^Online Purchase from\s*/i, '');
+      who = cleanPlace(mm.replace(/,\s*\d{6,}$/, '')) || null;
+    } else if (/\//.test(notes) && (raw === 'transfer_in' || raw === 'transfer_out' || raw === 'fee')) {
+      // Drop reference numbers (e.g. 20260806SANCBK…1276/ or 9128072600446011/), keep the name.
+      who = notes.replace(/[A-Z0-9]*\d{6,}[A-Z0-9]*\s*\/?/g, ' ').replace(/\//g, ' ').replace(/\s+/g, ' ').trim() || null;
+    }
+    if (raw === 'fee' && /charges/i.test(typeText)) who = null;
+    // The type text ("POS purchase Apple pay (Domestic)") stays in raw, not in the description, so it can't sway categories.
+    var description = [who, note].filter(Boolean).join(' | ') || typeText;
+    return {
+      date: row.date + (timeM ? 'T' + timeM[1] + '+03:00' : ''),
+      amount: amount,
+      currency: 'SAR',
+      description: description,
+      merchant: who ? who.slice(0, 120) : (raw === 'fee' ? 'Bank charges' : raw === 'bill_payment' ? 'SADAD bill' : null),
+      raw_category: raw,
+      channel: 'statement',
+      card_last4: card,
+      balance_after: row.balance,
+      raw: typeText + '\n' + row.date + ' ' + notes,
+      external_id: 'stmt:' + row.date + 'T' + (timeM ? timeM[1] : '') + ':' + Math.round(amount * 100) + ':' + Math.round(row.balance * 100)
+    };
+  }
+
+  /** Add statement rows, skipping ones already captured from texts (same amount within a day). */
+  function importStatement(data, rows) {
+    var list = rows.map(statementTransaction).filter(Boolean);
+    var taken = {};
+    var others = data.transactions.filter(function (t) { return !/^stmt:/.test(t.external_id || ''); });
+    var fresh = [], matched = 0;
+    var byExt = {};
+    data.transactions.forEach(function (t) { if (t.external_id) byExt[t.external_id] = true; });
+    list.forEach(function (s) {
+      if (byExt[s.external_id]) { fresh.push(s); return; } // counted as duplicate below
+      var day = s.date.slice(0, 10), amt = toHalalas(s.amount);
+      var hit = others.find(function (t) {
+        if (taken[t.id] || Math.abs(daysBetween(t.date, day)) > 1 || (t.amount > 0) !== (amt > 0)) return false;
+        if (t.amount === amt) return true;
+        // Foreign purchases: the text's converted amount is approximate.
+        return !!t.original_currency && Math.abs(t.amount - amt) <= Math.abs(amt) * 0.06;
+      });
+      if (hit) { taken[hit.id] = true; matched++; return; }
+      fresh.push(s);
+    });
+    var r = importTransactions(data, fresh);
+    r.matched = matched;
+    r.rows = rows.length;
+    if (list.length) {
+      var days = list.map(function (s) { return s.date.slice(0, 10); }).sort();
+      r.from = days[0]; r.to = days[days.length - 1];
+    }
+    return r;
+  }
+
   function importTexts(data, input) {
     return parseTexts(input).then(function (p) {
       var r = importTransactions(data, p.parsed);
@@ -913,6 +1066,7 @@
   }
 
   return {
+    statementRows: statementRows, statementTransaction: statementTransaction, importStatement: importStatement,
     // dates/money
     toDay: toDay, today: today, monthOf: monthOf, isMonth: isMonth, shiftMonth: shiftMonth, monthRange: monthRange,
     addDays: addDays, addMonths: addMonths, daysBetween: daysBetween, toHalalas: toHalalas, toSar: toSar,
