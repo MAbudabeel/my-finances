@@ -113,7 +113,10 @@
             </div>
           </div>
           <p id="import-result" class="import-result" role="status" hidden></p>
-          <button type="button" class="ask-banner" id="shops-btn" hidden></button>
+          <div class="pills">
+            <button type="button" class="ask-banner" id="shops-btn" hidden></button>
+            <button type="button" class="ask-banner ask-warn" id="backup-pill" hidden></button>
+          </div>
         </section>
 
         <section class="kpis" aria-label="This month at a glance">
@@ -253,7 +256,9 @@
           <section class="card" aria-labelledby="bk-title">
             <div class="card-head"><h2 id="bk-title">Backup</h2></div>
             <p class="muted small" id="bk-status"></p>
-            <p class="small">Your data lives only in this browser. If you delete Safari's website data, change phones, or don't open the app for a long time, it can be lost. A backup file is encrypted with your password; save it to Files or iCloud Drive.</p>
+            <p class="small">Your data lives only on this phone, inside this app. If you delete the app from the Home Screen, clear Safari's website data, or lose or change your phone, it's gone unless you have a backup.</p>
+            <p class="small">Tap <b>Back up</b> → <b>Save backup file</b> → <b>Save to Files</b> → iCloud Drive. The file is always called <b>My Finances backup.json</b>, so choose <b>Replace</b> and you keep one up-to-date copy. It's encrypted with your password: nobody can read it without the password, including Apple. Face ID and the PIN don't open backups.</p>
+            <p class="muted small">An iPhone web app isn't allowed to save files by itself, so this takes two taps. A reminder appears under Add bank texts when there's something new to back up.</p>
             <div class="row-actions">
               <button type="button" class="btn" id="backup-btn">Back up</button>
               <button type="button" class="btn-outline" id="restore-btn">Restore a backup</button>
@@ -262,8 +267,8 @@
 
           <section class="card" aria-labelledby="iph-title">
             <div class="card-head"><h2 id="iph-title">Al Rajhi texts</h2></div>
-            <p class="small">An iPhone Shortcut collects each Al Rajhi text as it arrives. Run the “Bank texts” shortcut, then tap <b>Paste texts</b> here. Setup steps are in the guide that came with the app.</p>
-            <p class="small">You can also copy a single text from Messages (press and hold → Copy) and tap <b>Paste texts</b>.</p>
+            <p class="small">Your iPhone automation saves each Al Rajhi text to <b>bank-texts.txt</b> and copies that file. When you unlock this app, it reads the copied texts (tap <b>Paste</b> when iOS asks) and adds the new ones. Texts already added are skipped.</p>
+            <p class="small">Missed one? Copy a text in Messages (press and hold → Copy) and tap <b>Paste texts</b> on the Overview.</p>
             <p class="muted small" id="tx-total"></p>
           </section>
 
@@ -384,7 +389,7 @@
   <dialog id="dlg-backup" class="dlg" aria-labelledby="dlg-backup-title">
     <form method="dialog">
       <h2 id="dlg-backup-title">Backup ready</h2>
-      <p class="small">Save it to Files (for example iCloud Drive). It's encrypted: you'll need the password you use now to restore it.</p>
+      <p class="small">Tap <b>Save backup file</b> → <b>Save to Files</b> → iCloud Drive, and choose <b>Replace</b> if asked. It's encrypted: you'll need your current password to restore it.</p>
       <div class="dlg-stack">
         <button type="button" class="btn" id="backup-share">Save backup file</button>
         <a class="btn-outline" id="backup-download" download>Download instead</a>

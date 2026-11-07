@@ -697,9 +697,14 @@
   function renderBackupStatus() {
     var last = data.meta && data.meta.last_backup_at;
     $('bk-status').textContent = demo ? 'Backups are off in demo mode.' : last ? 'Last backup ' + stampFmt.format(new Date(last)) : 'No backup yet.';
-    var stale = !demo && data.transactions.length > 0 && (!last || Date.now() - Date.parse(last) > 7 * 86400000);
-    $('backup-banner').hidden = !stale;
-    $('backup-banner-text').textContent = last ? 'Your last backup is over a week old.' : "You haven't made a backup yet.";
+    // Quiet reminder: only when transactions were added since the last backup and it's been a few days.
+    var lastTx = data.meta && data.meta.last_import_at;
+    var changed = data.transactions.length > 0 && (!last || (lastTx && lastTx > last));
+    var days = last ? Math.floor((Date.now() - Date.parse(last)) / 86400000) : null;
+    var due = !demo && changed && (!last || days >= 3);
+    $('backup-banner').hidden = true;
+    $('backup-pill').hidden = !due;
+    $('backup-pill').textContent = !last ? 'Back up your data' : 'Back up · last one ' + days + ' days ago';
     $('backup-btn').disabled = demo;
     $('restore-btn').disabled = demo;
   }
@@ -711,7 +716,7 @@
     data.meta.last_backup_at = stampNow;
     Store.backup(session, data).then(function (json) {
       if (backupUrl) URL.revokeObjectURL(backupUrl);
-      var name = 'finances-backup-' + Core.today() + '.json';
+      var name = 'My Finances backup.json';
       var blob = new Blob([json], { type: 'application/json' });
       backupFile = typeof File === 'function' ? new File([blob], name, { type: 'application/json' }) : null;
       backupUrl = URL.createObjectURL(blob);
@@ -1018,6 +1023,7 @@
 
     $('backup-btn').addEventListener('click', onBackup);
     $('backup-banner-btn').addEventListener('click', onBackup);
+    $('backup-pill').addEventListener('click', onBackup);
     $('backup-share').addEventListener('click', onShareBackup);
     $('restore-btn').addEventListener('click', function () { openRestore(false); });
     $('restore-form').addEventListener('submit', onRestore);

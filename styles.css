@@ -286,6 +286,8 @@ td.num .tx-desc { text-align: right; }
 }
 
 /* Shops that need a category */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pills:empty { display: none; }
 .ask-banner { display: inline-block; margin-top: 8px; font: inherit; font-size: 14px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border: 0; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .ask-banner::after { content: " ›"; }
 .shops-list { list-style: none; margin: 12px 0; padding: 0; max-height: 55vh; overflow-y: auto; }
@@ -297,3 +299,5 @@ td.num .tx-desc { text-align: right; }
 .btn-face { margin-bottom: 14px; min-height: 48px; }
 .quick-actions { flex-wrap: wrap; gap: 8px; }
 .gate-links { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; }
+.ask-warn { color: #8a5a00; background: #fff4d6; }
+.ask-warn::after { content: " ›"; }
