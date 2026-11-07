@@ -54,11 +54,13 @@ const OUT = process.argv[2] || __dirname;
     '##SMS##حوالة صادرة\nبـSR 100\nمن1234\nلـ9999;OWN NAME\n' + ymd + ' 00:01\n' +
     '##WALLET:URPAY##Received SAR 100.00 from OWN NAME\n##AT## ' + now() + '\n';
   await page.evaluate((t) => navigator.clipboard.writeText(t), clip);
-  await page.click('#wal-paste');
-  await page.waitForSelector('#wal-result:not([hidden])');
-  console.log('  ', await page.textContent('#wal-result'));
-  ok(/Added 4/.test(await page.textContent('#wal-result')), 'four transactions added');
-  ok(/1 text/.test(await page.textContent('#wal-result')), 'one unreadable text kept');
+  await page.click('#tab-overview');
+  await page.click('#paste-btn');
+  await page.waitForFunction(() => /Added/.test(document.querySelector('#import-result').textContent));
+  console.log('  ', await page.textContent('#import-result'));
+  ok(/Added 4/.test(await page.textContent('#import-result')), 'four transactions added');
+  await page.click('#tab-wallets');
+  ok(!/spent|Updated|available/.test(await page.textContent('#wal-list')), 'list shows only names and balances');
   await page.click('#wal-list-title'); // the next tap writes the done marker
   await page.waitForTimeout(200);
   ok((await page.evaluate(() => navigator.clipboard.readText())) === '##WALLET-DONE##', 'done marker on clipboard');

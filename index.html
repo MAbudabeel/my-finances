@@ -263,17 +263,15 @@
               <div><h2 class="plan-label" id="wal-total-label">In your wallets</h2><p class="wal-big" id="wal-total">–</p></div>
               <div><h2 class="plan-label">Owed on ANB card</h2><p class="wal-big" id="wal-owed">–</p></div>
             </div>
-            <p class="plan-foot" id="wal-hint">Tap a wallet to enter what's in it now. After that, its texts keep it up to date.</p>
+            <p class="plan-foot" id="wal-hint">Tap each one once to enter what's in it now. After that, its texts keep it up to date.</p>
           </section>
 
           <section class="card" aria-labelledby="wal-list-title">
             <div class="card-head">
               <h2 id="wal-list-title">Wallets and card</h2>
-              <button type="button" class="btn-link" id="wal-paste">Paste wallet texts</button>
             </div>
             <ul class="wal-list" id="wal-list"></ul>
             <p id="wal-result" class="import-result" role="status" hidden></p>
-            <p class="muted small plan-hint">Money moved between Al Rajhi and a wallet or the card is counted once, as a transfer between your own accounts, not as spending.</p>
           </section>
         </div>
       </div>
@@ -443,11 +441,14 @@
       <h2 id="dlg-wallet-title"></h2>
       <p class="dlg-amount" id="dlg-wallet-balance"></p>
       <p class="muted small" id="dlg-wallet-meta"></p>
-      <label class="field"><span id="dlg-wallet-amount-label">Balance now (SAR)</span>
-        <input id="dlg-wallet-amount" type="text" inputmode="decimal" autocomplete="off"></label>
-      <label class="field" id="dlg-wallet-limit-field" hidden><span>Credit limit (SAR, optional, to show what's available)</span>
-        <input id="dlg-wallet-limit" type="text" inputmode="decimal" autocomplete="off"></label>
-      <p id="dlg-wallet-error" class="form-error" role="alert" hidden></p>
+      <details class="raw" id="dlg-wallet-edit">
+        <summary>Set or correct the balance</summary>
+        <label class="field"><span id="dlg-wallet-amount-label">Balance now (SAR)</span>
+          <input id="dlg-wallet-amount" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="field" id="dlg-wallet-limit-field" hidden><span>Credit limit (SAR, optional, to show what's available)</span>
+          <input id="dlg-wallet-limit" type="text" inputmode="decimal" autocomplete="off"></label>
+        <p id="dlg-wallet-error" class="form-error" role="alert" hidden></p>
+      </details>
       <h3 class="dlg-sub">Latest</h3>
       <ul class="wal-recent" id="dlg-wallet-recent"></ul>
       <details class="raw" id="dlg-wallet-unread-box" hidden>

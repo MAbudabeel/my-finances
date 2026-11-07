@@ -1219,18 +1219,13 @@
       var left = el('span', 'wal-name');
       left.appendChild(el('b', null, w.name));
       if (w.kind === 'card') left.appendChild(el('small', 'wal-edition', 'Visa Signature · World Cup 26'));
-      var sub = [];
-      if (!w.known) sub.push('Tap to enter the balance');
-      else if (w.updated) sub.push('Updated ' + when(w.updated));
-      if (num(w.month_spent) > 0) sub.push(whole(w.month_spent) + ' spent this month');
-      if (w.unread) sub.push(w.unread + ' unread text' + (w.unread === 1 ? '' : 's'));
-      left.appendChild(el('small', 'muted', sub.join(' · ')));
+      // The list shows only the name and balance; details are one tap away.
+      if (!w.known) left.appendChild(el('small', 'muted', 'Tap to enter the balance once'));
       b.appendChild(left);
       var right = el('span', 'wal-amt' + (w.kind === 'card' ? ' wal-owe' : ''));
       if (!w.known) right.textContent = 'Set ›';
       else if (w.kind === 'card') {
         right.textContent = money(-w.balance);
-        if (w.available !== null) left.appendChild(el('small', 'muted', money(w.available) + ' available of ' + whole(w.limit)));
       } else right.textContent = money(w.balance);
       b.appendChild(right);
       b.addEventListener('click', function () { openWallet(w.id); });
@@ -1252,9 +1247,14 @@
     art.className = 'wal-art wal-c-' + id;
     $('dlg-wallet-balance').textContent = w.known ? (isCard ? money(-w.balance) + ' owed' : money(w.balance)) : 'No balance yet';
     var meta = [];
-    if (w.start) meta.push('You set ' + money(isCard ? -w.start.amount : w.start.amount) + ' on ' + when(w.start.at));
-    if (w.texts_since_start) meta.push(w.texts_since_start + ' text' + (w.texts_since_start === 1 ? '' : 's') + ' since');
     if (isCard && w.available !== null) meta.push(money(w.available) + ' available of ' + money(w.limit));
+    if (w.known && w.updated) meta.push('Updated ' + when(w.updated));
+    if (num(w.month_spent) > 0) meta.push(money(w.month_spent) + ' spent this month');
+    if (num(w.month_in) > 0) meta.push(money(w.month_in) + ' received this month');
+    // Entering the balance is a one-time step; afterwards it sits folded away for corrections.
+    var edit = $('dlg-wallet-edit');
+    edit.open = !w.known;
+    $('dlg-wallet-save').hidden = !edit.open;
     $('dlg-wallet-meta').textContent = meta.join(' · ');
     $('dlg-wallet-amount-label').textContent = isCard ? 'Amount you owe now (SAR)' : 'Balance now (SAR)';
     $('dlg-wallet-amount').value = w.known ? String(isCard ? -w.balance : w.balance) : '';
@@ -1343,7 +1343,7 @@
   }
 
   // ---------- app version & updates ----------
-  var APP_VERSION = '22'; // keep in step with VERSION in sw.js
+  var APP_VERSION = '23'; // keep in step with VERSION in sw.js
   function showVersion() { $('app-version').textContent = APP_VERSION; $('footer-version').textContent = APP_VERSION; }
   // Fetch the newest app files: ask for a new offline worker, drop the old cached files, reload.
   // Reloading locks the app, so the data is saved first.
@@ -1432,7 +1432,7 @@
 
     $('shops-btn').addEventListener('click', openShops);
     $('eye-btn').addEventListener('click', togglePrivacy);
-    $('wal-paste').addEventListener('click', onWalletPaste);
+    $('dlg-wallet-edit').addEventListener('toggle', function () { $('dlg-wallet-save').hidden = !$('dlg-wallet-edit').open; });
     $('wallet-form').addEventListener('submit', saveWallet);
     $('dlg-wallet-add').addEventListener('click', addWalletText);
     $('dlg-wallet-unread-clear').addEventListener('click', function () {
