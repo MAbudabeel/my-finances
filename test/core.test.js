@@ -447,3 +447,41 @@ test('pay months run from payday to the day before the next payday', async () =>
   assert.equal(Core.periodOf(d, '2026-09-28'), '2026-09');
   assert.equal(Core.periodRange(d, '2026-10').start, '2026-10-01');
 });
+
+test('plan: safe to spend until payday counts spending, transfers to people and bills still due', async () => {
+  const d = Core.emptyData();
+  const now = new Date(2026, 10, 7); // 7 Nov 2026
+  await Core.importTexts(d, FinDemo.demoTexts(now));
+  Core.detect(d, { asOf: '2026-11-07' });
+  const p = Core.planView(d, '2026-11-07');
+  assert.equal(p.month, '2026-11');
+  assert.equal(p.start, '2026-10-27');
+  assert.equal(p.payday, '2026-11-27');
+  assert.equal(p.days_left, 20);
+  assert.equal(p.day, 12);
+  assert.equal(p.income, 18000);
+  assert.equal(p.sent, 4500); // rent to the landlord
+  const rent = p.bills.find((b) => b.name === 'Landlord');
+  assert.ok(rent && rent.paid, 'monthly rent transfer is found and marked paid');
+  const stc = p.bills.find((b) => b.name === 'Stc');
+  assert.ok(stc && !stc.paid && stc.date === '2026-11-15');
+  assert.ok(!p.bills.some((b) => /spotify/i.test(b.name)), 'cancelled subscriptions are left out');
+  const due = p.bills.filter((b) => !b.paid).reduce((a, b) => a + b.amount, 0);
+  assert.equal(Math.round(due * 100), Math.round(p.bills_left * 100));
+  assert.equal(Math.round(p.safe * 100), Math.round((p.income - p.spent - p.sent - p.bills_left) * 100));
+  assert.equal(p.pace, 'on_track');
+  assert.equal(p.recap.month, '2026-10');
+  assert.ok(p.recap.has_data);
+  assert.equal(p.recap.top[0].category, 'groceries');
+  assert.equal(Math.round(p.recap.saved * 100), Math.round((p.recap.income - p.recap.spent - p.recap.sent) * 100));
+});
+
+test('plan: before any salary the plan says so instead of a negative number', async () => {
+  const d = Core.emptyData();
+  await Core.importTexts(d, 'شراء PoS\nعبر:1111;مدى\nبـSAR 50\nلـALBAIK 1\n3/11/26 12:00\n');
+  const p = Core.planView(d, '2026-11-05');
+  assert.equal(p.pace, 'no_income');
+  assert.equal(p.per_day, 0);
+  assert.equal(p.bills.length, 0);
+  assert.equal(p.recap.has_data, false);
+});

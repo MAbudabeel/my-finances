@@ -74,6 +74,7 @@
         </div>
         <nav class="tabs" aria-label="Sections">
           <a href="#overview" id="tab-overview" class="tab" aria-current="page">Overview</a>
+          <a href="#plan" id="tab-plan" class="tab">Plan</a>
           <a href="#salary" id="tab-salary" class="tab">Salary</a>
           <a href="#settings" id="tab-settings" class="tab">Settings</a>
         </nav>
@@ -124,6 +125,10 @@
         </section>
 
         <p class="period-note muted small" id="period-note" hidden></p>
+        <a class="plan-strip" id="plan-strip" href="#plan" hidden>
+          <span><small id="plan-strip-label">Safe to spend until payday</small><b id="plan-strip-amount"></b> <span class="muted small" id="plan-strip-sub"></span></span>
+          <span class="plan-strip-go">Plan ›</span>
+        </a>
         <section class="kpis" aria-label="This month at a glance">
           <article class="kpi">
             <h2 class="kpi-label">Income</h2>
@@ -200,6 +205,50 @@
             </div>
             <p id="tx-empty" class="empty" hidden>No transactions match.</p>
             <p class="muted small" id="tx-count"></p>
+          </section>
+        </div>
+      </div>
+
+      <!-- Plan -->
+      <div id="view-plan" hidden>
+        <div class="plan-stack">
+          <section class="card plan-hero" aria-labelledby="plan-hero-label">
+            <h2 class="plan-label" id="plan-hero-label">Safe to spend until payday</h2>
+            <p class="plan-amount" id="plan-safe">–</p>
+            <p class="plan-perday" id="plan-perday"></p>
+            <div class="plan-bar" aria-hidden="true"><i id="plan-bar-fill"></i></div>
+            <div class="plan-meta"><span id="plan-day"></span><span id="plan-pace"></span></div>
+            <dl class="plan-split">
+              <div><dt>Income</dt><dd id="plan-income">–</dd></div>
+              <div><dt>Spent so far</dt><dd id="plan-spent">–</dd></div>
+              <div><dt>Bills left</dt><dd id="plan-left">–</dd></div>
+            </dl>
+            <p class="plan-foot" id="plan-sent" hidden></p>
+          </section>
+
+          <section class="card" aria-labelledby="plan-bills-title">
+            <div class="card-head">
+              <h2 id="plan-bills-title">Coming up before payday</h2>
+              <span class="muted small" id="plan-bills-total"></span>
+            </div>
+            <ul class="plan-bills" id="plan-bills"></ul>
+            <p class="muted small plan-hint">Found from charges that repeat (subscriptions, bills, loan payments, rent transfers). Change them under Subscriptions on the Overview.</p>
+          </section>
+
+          <section class="card" aria-labelledby="plan-recap-title">
+            <div class="card-head">
+              <h2 id="plan-recap-title">Last pay month</h2>
+              <span class="muted small" id="plan-recap-range"></span>
+            </div>
+            <div id="plan-recap-body">
+              <div class="plan-twin">
+                <div><span>Spent</span><b id="plan-recap-spent">–</b></div>
+                <div><span>Saved</span><b id="plan-recap-saved">–</b></div>
+              </div>
+              <p class="muted small plan-foot-dark" id="plan-recap-sent" hidden></p>
+              <ul class="bars plan-cats" id="plan-recap-cats"></ul>
+            </div>
+            <p class="empty" id="plan-recap-empty" hidden>No texts from last month yet. Import a bank statement to fill it in.</p>
           </section>
         </div>
       </div>

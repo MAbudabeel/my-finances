@@ -6,6 +6,7 @@ The laptop version in `finance-app/` is unchanged and separate; they don't share
 ## What it does
 - Reads Al Rajhi alert texts (same parser as the laptop version: PoS, online purchase, Visa card payoff as a transfer, salary, transfers, ATM, bills, refunds; OTPs and offers ignored).
 - Categories tuned for Saudi spending (groceries, dining, coffee, fuel, rides, car, health, personal care, home, shopping, bills, government, and more; hundreds of local merchant names in English and Arabic). Shops it can't place show a small "N shops need your pick" button under Add bank texts; picking once teaches it that shop (choose Other to stop being asked). Nothing pops up on its own. Subscription detection (price changes, cancelled, "not a subscription"), refunds net off spending, Riyadh dates, Salary tab with GOSI helper.
+- **Plan tab**: safe to spend until payday (income minus spending, money sent to people, and bills still due), with a daily amount; bills and subscriptions coming up before payday (paid ones crossed out; regular rent-style transfers are found too); and a short recap of last pay month with what went up or down. The Overview shows one line linking to it.
 - Blue/white dashboard in SAR. Months run payday to payday by default (a salary on the 15th or later starts the next month; e.g. paid 28 Nov = "December"), taken from your actual salary dates; Settings → Security → Months switches to calendar months.
 
 ## Privacy and security

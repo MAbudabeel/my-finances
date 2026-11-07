@@ -1116,6 +1116,102 @@
     });
   }
 
+  // ======================================================================
+  // Plan: safe to spend until payday, bills still due, last month recap
+  // ======================================================================
+  /** Everything the Plan tab shows, for the month that contains asOf. Amounts in SAR. */
+  function planView(data, asOf) {
+    asOf = asOf || today();
+    var key = periodOf(data, asOf), range = periodRange(data, key), per = periodFn(data);
+    var payday = addDays(range.end, 1);
+    var income = 0, spent = 0, sent = 0;
+    data.transactions.forEach(function (t) {
+      if (!booked(t) || t.date > asOf || per(t.date) !== key) return;
+      if (t.category === 'transfer') {
+        // Money sent to people (rent, family) is gone too; moves between own accounts and card payoffs are not.
+        if (t.amount < 0 && t.raw_category === 'transfer_out') sent -= t.amount;
+        return;
+      }
+      if (t.type === 'salary' || t.type === 'income') income += t.amount;
+      if (t.type === 'spending' || t.type === 'subscription' || t.type === 'refund') spent -= t.amount;
+    });
+
+    // Things that come back: detected subscriptions and bills, plus regular transfers to the same person (rent).
+    var items = [];
+    data.subscriptions.forEach(function (s) {
+      if (s.status !== 'active' && s.status !== 'suspected') return;
+      if (!s.next_renewal || !s.amount) return;
+      items.push({ name: s.name, amount: s.amount, cycle: s.cycle, last: s.last_charged, next: s.next_renewal, kind: s.kind });
+    });
+    var groups = new Map();
+    data.transactions.forEach(function (t) {
+      if (!booked(t) || t.amount >= 0 || t.category !== 'transfer' || t.raw_category !== 'transfer_out') return;
+      var k = merchantKey(t);
+      if (!k) return;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(t);
+    });
+    groups.forEach(function (list) {
+      list.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+      var info = list.length >= 3 ? analyzeGroup(list) : null;
+      var last = list[list.length - 1];
+      if (!info || info.cycle !== 'monthly' || daysBetween(last.date, asOf) > 45) return;
+      items.push({ name: prettyName(last), amount: info.amount, cycle: 'monthly', last: last.date, next: nextAfter(last.date, 'monthly'), kind: 'transfer' });
+    });
+
+    var bills = [], left = 0;
+    items.forEach(function (it) {
+      if (it.last && it.last >= range.start && it.last <= asOf) bills.push({ name: it.name, amount: toSar(it.amount), date: it.last, paid: true, kind: it.kind });
+      for (var d = it.next, n = 0; d < payday && n < 60; d = nextAfter(d, it.cycle), n++) {
+        if (d < range.start) continue;
+        bills.push({ name: it.name, amount: toSar(it.amount), date: d, paid: false, overdue: d < asOf, kind: it.kind });
+        left += it.amount;
+      }
+    });
+    bills.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.name < b.name ? -1 : 1; });
+
+    var safe = income - spent - sent - left;
+    var daysLeft = Math.max(1, daysBetween(asOf, payday));
+    var totalDays = Math.max(1, daysBetween(range.start, payday));
+    var day = Math.min(totalDays, daysBetween(range.start, asOf) + 1);
+    var pace;
+    if (income <= 0) pace = 'no_income';
+    else if (safe < 0) pace = 'over';
+    else {
+      // Share of the free money (after bills) used so far, against share of the month gone.
+      var free = income - (left + bills.filter(function (b) { return b.paid; }).reduce(function (a, b) { return a + Math.round(b.amount * 100); }, 0));
+      var used = free > 0 ? (spent + sent - bills.filter(function (b) { return b.paid; }).reduce(function (a, b) { return a + Math.round(b.amount * 100); }, 0)) / free : 1;
+      pace = used <= day / totalDays + 0.1 ? 'on_track' : 'fast';
+    }
+
+    // Last month in short, compared with the month before it.
+    var prev = shiftMonth(key, -1), prevRange = periodRange(data, prev);
+    var ps = monthSummary(data, prev), prevSent = 0;
+    data.transactions.forEach(function (t) {
+      if (booked(t) && t.amount < 0 && t.category === 'transfer' && t.raw_category === 'transfer_out' && per(t.date) === prev) prevSent -= t.amount;
+    });
+    var before = {};
+    categoryBreakdown(data, shiftMonth(prev, -1)).forEach(function (c) { before[c.category] = c.amount; });
+    var hasBefore = Object.keys(before).length > 0;
+    var top = categoryBreakdown(data, prev).filter(function (c) { return c.amount > 0; }).slice(0, 5).map(function (c) {
+      var change = hasBefore ? Math.round((c.amount - (before[c.category] || 0)) * 100) / 100 : 0;
+      var notable = hasBefore && Math.abs(change) >= Math.max(100, (before[c.category] || 0) * 0.15);
+      return { category: c.category, amount: c.amount, change: notable ? change : 0 };
+    });
+
+    return {
+      month: key, start: range.start, end: range.end, payday: payday, payday_mode: range.payday,
+      as_of: asOf, day: day, total_days: totalDays, days_left: daysLeft,
+      income: toSar(income), spent: toSar(spent), sent: toSar(sent), bills_left: toSar(left),
+      safe: toSar(safe), per_day: toSar(safe > 0 ? Math.floor(safe / daysLeft) : 0), pace: pace,
+      bills: bills,
+      recap: {
+        month: prev, start: prevRange.start, end: prevRange.end,
+        spent: ps.spending, sent: toSar(prevSent), saved: Math.round((ps.net - prevSent / 100) * 100) / 100, income: ps.income, has_data: ps.transaction_count > 0, top: top
+      }
+    };
+  }
+
   return {
     statementRows: statementRows, statementTransaction: statementTransaction, importStatement: importStatement,
     // dates/money
@@ -1132,6 +1228,6 @@
     // views
     monthSummary: monthSummary, monthlyTrend: monthlyTrend, categoryBreakdown: categoryBreakdown,
     subscriptionsOut: subscriptionsOut, transactionsOut: transactionsOut, monthsWithData: monthsWithData,
-    setSalaryProfile: setSalaryProfile, salaryView: salaryView
+    setSalaryProfile: setSalaryProfile, salaryView: salaryView, planView: planView
   };
 });

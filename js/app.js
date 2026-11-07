@@ -23,6 +23,7 @@
   function catLabel(id) { return categoryLabels[id] || 'Other'; }
 
   var sar = new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var sarWhole = new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', maximumFractionDigits: 0 });
   var sarShort = new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', notation: 'compact', maximumFractionDigits: 1 });
   var monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' });
   var monthShort = new Intl.DateTimeFormat('en-GB', { month: 'short' });
@@ -318,6 +319,7 @@
     renderImportStatus();
     renderShopsBanner();
     renderBackupStatus();
+    renderPlan();
     if (window.location.hash === '#salary') loadSalary(true);
   }
 
@@ -341,6 +343,7 @@
     renderCategories(Core.categoryBreakdown(data, state.month));
     renderTrend();
     renderTransactions(true);
+    renderPlanStrip();
   }
 
   // ---------- KPIs ----------
@@ -985,11 +988,112 @@
     applySalary(Core.salaryView(data));
   }
 
+  // ---------- plan ----------
+  function whole(v) { return sarWhole.format(Math.round(num(v))); }
+  function utcDay(d) { return new Date(String(d).slice(0, 10) + 'T00:00:00Z'); }
+  function planLabel(p) { return p.payday_mode ? 'until payday' : 'until month end'; }
+
+  function renderPlanStrip() {
+    var strip = $('plan-strip');
+    if (!data || state.month !== currentMonth() || !data.transactions.length) { strip.hidden = true; return; }
+    var p = Core.planView(data);
+    strip.hidden = false;
+    var amt = $('plan-strip-amount');
+    if (num(p.income) <= 0) {
+      $('plan-strip-label').textContent = 'Safe to spend';
+      amt.textContent = 'After salary';
+      amt.className = '';
+      $('plan-strip-sub').textContent = '';
+      return;
+    }
+    $('plan-strip-label').textContent = 'Safe to spend ' + planLabel(p);
+    amt.textContent = p.safe < 0 ? whole(-p.safe) + ' over' : whole(p.safe);
+    amt.className = p.safe < 0 ? 'neg' : '';
+    $('plan-strip-sub').textContent = p.safe > 0 ? '· ' + whole(p.per_day) + '/day' : '';
+  }
+
+  function renderPlan() {
+    if (!data) return;
+    var p = Core.planView(data);
+    var when = shortDay.format(utcDay(p.payday));
+    $('plan-hero-label').textContent = 'Safe to spend ' + planLabel(p) + ' · ' + when;
+    var safeEl = $('plan-safe'), perDay = $('plan-perday');
+    if (num(p.income) <= 0) {
+      safeEl.textContent = '–';
+      perDay.textContent = 'Shows once this month’s salary is in.';
+    } else if (p.safe < 0) {
+      safeEl.textContent = whole(-p.safe) + ' over';
+      perDay.textContent = 'Spending and bills are more than this month’s income.';
+    } else {
+      safeEl.textContent = whole(p.safe);
+      perDay.textContent = '';
+      perDay.appendChild(document.createTextNode('About '));
+      perDay.appendChild(el('b', null, whole(p.per_day) + ' a day'));
+      perDay.appendChild(document.createTextNode(' for the next ' + p.days_left + (p.days_left === 1 ? ' day' : ' days')));
+    }
+    $('plan-bar-fill').style.width = Math.min(100, p.day / p.total_days * 100).toFixed(1) + '%';
+    $('plan-day').textContent = 'Day ' + p.day + ' of ' + p.total_days;
+    $('plan-pace').textContent = { on_track: 'On track', fast: 'Spending faster than usual', over: 'Over', no_income: '' }[p.pace] || '';
+    $('plan-income').textContent = whole(p.income);
+    $('plan-spent').textContent = whole(num(p.spent) + num(p.sent));
+    $('plan-left').textContent = whole(p.bills_left);
+    var sent = $('plan-sent');
+    sent.hidden = !(num(p.sent) > 0);
+    sent.textContent = 'Spent so far includes ' + whole(p.sent) + ' sent to people by transfer.';
+
+    var ul = $('plan-bills');
+    clear(ul);
+    $('plan-bills-total').textContent = num(p.bills_left) > 0 ? whole(p.bills_left) + ' left' : '';
+    if (!p.bills.length) ul.appendChild(el('li', 'empty', 'Nothing regular found yet. Bills show up here after they repeat twice.'));
+    p.bills.forEach(function (b) {
+      var li = el('li', b.paid ? 'is-paid' : null);
+      var left = el('span', 'plan-name');
+      left.appendChild(el('span', 'plan-when', shortDay.format(utcDay(b.date))));
+      left.appendChild(document.createTextNode(b.name));
+      li.appendChild(left);
+      var right = el('span', 'plan-amt', b.paid ? 'Paid' : whole(b.amount));
+      if (b.paid) right.appendChild(el('span', 'plan-tick', '✓'));
+      else if (b.overdue) right.appendChild(el('span', 'plan-late', 'due'));
+      li.appendChild(right);
+      ul.appendChild(li);
+    });
+
+    var r = p.recap;
+    $('plan-recap-title').textContent = p.payday_mode ? 'Last pay month' : 'Last month';
+    $('plan-recap-range').textContent = shortDay.format(utcDay(r.start)) + ' – ' + shortDay.format(utcDay(r.end));
+    $('plan-recap-body').hidden = !r.has_data;
+    $('plan-recap-empty').hidden = r.has_data;
+    if (!r.has_data) return;
+    $('plan-recap-spent').textContent = whole(r.spent);
+    var saved = $('plan-recap-saved');
+    saved.textContent = num(r.saved) < 0 ? whole(-r.saved) + ' over' : whole(r.saved);
+    saved.className = num(r.saved) < 0 ? 'neg' : 'pos';
+    var rs = $('plan-recap-sent');
+    rs.hidden = !(num(r.sent) > 0);
+    rs.textContent = 'Saved is after ' + whole(r.sent) + ' sent to people by transfer.';
+    var cats = $('plan-recap-cats');
+    clear(cats);
+    var max = r.top.length ? num(r.top[0].amount) : 1;
+    r.top.forEach(function (c) {
+      var li = el('li');
+      var name = el('span', 'bar-name', catLabel(c.category));
+      if (c.change > 0) name.appendChild(el('span', 'plan-up', '▲ ' + whole(c.change).replace('SAR', '').trim()));
+      if (c.change < 0) name.appendChild(el('span', 'plan-down', '▼ ' + whole(-c.change).replace('SAR', '').trim()));
+      li.appendChild(name);
+      li.appendChild(el('span', 'bar-amt', whole(c.amount)));
+      var track = el('div', 'bar-track'), fill = el('div', 'bar-fill');
+      fill.style.width = (num(c.amount) / max * 100).toFixed(1) + '%';
+      track.appendChild(fill);
+      li.appendChild(track);
+      cats.appendChild(li);
+    });
+  }
+
   // ---------- views ----------
   function showView() {
     var h = window.location.hash;
-    var view = h === '#salary' ? 'salary' : h === '#settings' ? 'settings' : 'overview';
-    ['overview', 'salary', 'settings'].forEach(function (v) {
+    var view = h === '#salary' ? 'salary' : h === '#settings' ? 'settings' : h === '#plan' ? 'plan' : 'overview';
+    ['overview', 'plan', 'salary', 'settings'].forEach(function (v) {
       $('view-' + v).hidden = v !== view;
       if (v === view) $('tab-' + v).setAttribute('aria-current', 'page'); else $('tab-' + v).removeAttribute('aria-current');
     });
@@ -997,6 +1101,7 @@
     if (!data) return;
     if (view === 'salary') loadSalary();
     if (view === 'overview') renderTrend();
+    if (view === 'plan') { renderPlan(); window.scrollTo(0, 0); }
     if (view === 'settings') {
       renderQuick();
       $('autolock').value = String(settings.autolock);
