@@ -1343,7 +1343,7 @@
   }
 
   // ---------- app version & updates ----------
-  var APP_VERSION = '24'; // keep in step with VERSION in sw.js
+  var APP_VERSION = '25'; // keep in step with VERSION in sw.js
   function showVersion() { $('app-version').textContent = APP_VERSION; $('footer-version').textContent = APP_VERSION; }
   // Fetch the newest app files: ask for a new offline worker, drop the old cached files, reload.
   // Reloading locks the app, so the data is saved first.

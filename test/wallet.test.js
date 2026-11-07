@@ -170,3 +170,20 @@ test('real ANB texts keep what you owe in line with the limit', async () => {
   assert.equal(c.balance, -6058.97);
   assert.equal(Core.monthSummary(d, Core.periodOf(d, '2026-11-07')).spending, 270.91);
 });
+
+// Real urpay text (card digits changed): a mada purchase with no balance.
+const URPAY_MCD = 'شراء\nبطاقة:مدى;1111\nمبلغ:SAR 3.0\nلدى:MCDONALDS-MUNISIYAH\nفي:27-01-2026 21:28';
+
+test('real urpay text: purchase taken off the balance, its own date kept', async () => {
+  const t = Core.parseWalletSms(URPAY_MCD, 'urpay', { receivedAt: '2026-01-27T21:28:09+03:00' });
+  assert.equal(t.amount, -3);
+  assert.equal(t.merchant, 'MCDONALDS-MUNISIYAH');
+  assert.equal(t.balance_after, null);
+  assert.equal(t.date, '2026-01-27T21:28:00+03:00');
+  const d = Core.emptyData();
+  Core.setWalletStart(d, 'urpay', 39, { at: '2026-01-27T20:00:00+03:00' });
+  await Core.importTexts(d, W('URPAY', URPAY_MCD, '2026-01-27T21:28:09+03:00'));
+  const u = Core.walletsView(d).wallets.find((w) => w.id === 'urpay');
+  assert.equal(u.balance, 36);
+  assert.equal(d.transactions[0].category, 'dining');
+});
