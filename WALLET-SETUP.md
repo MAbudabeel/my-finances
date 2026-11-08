@@ -35,7 +35,7 @@ The first time it runs, iOS may ask to allow clipboard access: choose **Always A
 
 Shortcuts → Automation → **+** → **Message** → **Sender**: the contact from step 1 → **Run Immediately** (Notify When Run off) → New Blank Automation:
 
-1. **Text**: the tag, then a new line, then **Shortcut Input** (set to **Content**)
+1. **Text**: the tag, then a new line, then the **Message** variable (newer iOS calls it Message; older versions show Shortcut Input → Content). Only one variable after the tag.
 2. **Run Shortcut**: **Wallet Saver**, with the Text as input
 
 Tags (type them exactly, capitals included):
