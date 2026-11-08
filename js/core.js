@@ -1255,6 +1255,8 @@
     var date = dt && /\d:\d\d/.test(dt[0]) ? parseSmsDate(dt[0], meta.receivedAt) : null;
     if (!date && meta.receivedAt) date = parseSmsDate(null, meta.receivedAt);
     if (!date && dt) date = parseSmsDate(dt[0], null);
+    // No date anywhere (simple setup without ##AT##): use the moment it's added, which is close enough.
+    if (!date) date = toRiyadhIso(new Date());
     var card = t.match(/(?:بطاقة|البطاقة|card|via)[^\d\n]{0,12}\*?(\d{4})(?!\d)/i);
     var label = { refund: 'Refund', transfer_in: 'Money in', wallet_topup: 'Top-up', atm_withdrawal: 'Cash withdrawal', transfer_out: 'Transfer out',
       bill_payment: 'Bill payment', fee: 'Fee', online_purchase: 'Online purchase', pos_purchase: 'Payment', card_payment: 'Card payment' }[rule.type];

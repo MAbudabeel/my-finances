@@ -271,3 +271,10 @@ test('D360: balance follows the texts; Al Rajhi money in is one transfer; paying
   assert.ok(inn.link, 'paired with the Al Rajhi transfer out');
   assert.equal(d.transactions.find((x) => x.id === inn.link).category, 'transfer');
 });
+
+test('simple setup: wallet text in the Al Rajhi file, no ##AT## and no date, still added', async () => {
+  const d = Core.emptyData();
+  const r = await Core.importTexts(d, '##SMS##شراء PoS\nعبر:1111;مدى\nبـSAR 4\nلـCAFE\n3/11/26 22:05\n##WALLET:BARQ##Paid SAR 9.00 to ALI\n');
+  assert.equal(r.inserted, 2);
+  assert.ok(d.transactions.find((t) => t.account === 'barq').date);
+});
