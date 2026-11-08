@@ -11,7 +11,9 @@ Contacts → **+** → name e.g. `ANB texts` → **add email** → type the send
 |---|---|
 | ANB credit card | `ANB` |
 | urpay | `urpay` |
-| STC Pay, D360, barq | (to be confirmed) |
+| STC Pay | `STC Bank` |
+| D360 Bank | `D360 Bank` |
+| barq | (to be confirmed) |
 
 ## 2. One automation per wallet
 
