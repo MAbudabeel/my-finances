@@ -1264,7 +1264,7 @@
     var ul = $('dlg-wallet-recent');
     clear(ul);
     if (!w.recent.length) ul.appendChild(el('li', 'empty', 'No texts from ' + w.name + ' yet.'));
-    // Every transaction, newest first, each with its category (tap it to change).
+    // Every transaction, newest first, each with its category.
     var SHOW = 25;
     var addRow = function (t) {
       var li = el('li', 'wal-tx');
@@ -1274,8 +1274,8 @@
       li.appendChild(name);
       li.appendChild(el('span', 'wal-amt' + (t.amount > 0 ? ' pos' : ''), (t.amount > 0 ? '+' : '') + money(t.amount)));
       var cat = el('span', 'wal-tx-cat');
-      if (t.link) cat.appendChild(el('span', 'wal-chip', 'Between your accounts'));
-      else { var sel = categorySelect(t); sel.className = 'wal-chip-select'; sel.addEventListener('change', function () { renderWallets(); }); cat.appendChild(sel); }
+      // The app picks the category itself (same as Al Rajhi); shown as a label only.
+      cat.appendChild(el('span', 'wal-chip' + (t.link ? ' wal-chip-muted' : ''), t.link ? 'Between your accounts' : catLabel(t.category)));
       li.appendChild(cat);
       ul.appendChild(li);
     };
@@ -1358,7 +1358,7 @@
   }
 
   // ---------- app version & updates ----------
-  var APP_VERSION = '30'; // keep in step with VERSION in sw.js
+  var APP_VERSION = '31'; // keep in step with VERSION in sw.js
   function showVersion() { $('app-version').textContent = APP_VERSION; $('footer-version').textContent = APP_VERSION; }
   // Fetch the newest app files: ask for a new offline worker, drop the old cached files, reload.
   // Reloading locks the app, so the data is saved first.

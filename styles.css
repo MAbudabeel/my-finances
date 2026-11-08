@@ -421,3 +421,5 @@ td.num .tx-desc { text-align: right; }
 .wal-more { justify-content: center !important; border-bottom: 0 !important; }
 .wal-recent li.wal-tx .wal-amt { justify-self: end; max-width: none; }
 .wal-chip-select { width: auto; }
+.wal-chip { color: var(--accent-deep); background: var(--accent-soft); }
+.wal-chip.wal-chip-muted { color: var(--text-muted); background: var(--surface-2, #eef2f7); }
