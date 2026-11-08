@@ -411,3 +411,13 @@ td.num .tx-desc { text-align: right; }
 .privacy .eye-btn .eye-off { display: inline; }
 .privacy .pay-amount, .privacy #dlg-wallet-amount, .privacy #dlg-wallet-limit { -webkit-text-security: disc; text-security: disc; }
 .app-ver { display: block; margin-top: 4px; opacity: .8; }
+/* Wallet details: every transaction with its category */
+.wal-recent li.wal-tx { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 4px; align-items: center; }
+.wal-tx-merchant { overflow-wrap: anywhere; }
+.wal-tx-cat { grid-column: 1 / -1; }
+.wal-chip, .wal-chip-select { display: inline-block; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--accent-deep); background: var(--accent-soft); border: 0; border-radius: 999px; padding: 4px 10px; max-width: 100%; }
+.wal-chip-select { -webkit-appearance: none; appearance: none; padding-right: 22px; background-image: linear-gradient(45deg, transparent 50%, var(--accent-deep) 50%), linear-gradient(135deg, var(--accent-deep) 50%, transparent 50%); background-position: right 11px center, right 7px center; background-size: 4px 4px; background-repeat: no-repeat; }
+.wal-chip { color: var(--text-muted); background: var(--surface-2, #eef2f7); }
+.wal-more { justify-content: center !important; border-bottom: 0 !important; }
+.wal-recent li.wal-tx .wal-amt { justify-self: end; max-width: none; }
+.wal-chip-select { width: auto; }

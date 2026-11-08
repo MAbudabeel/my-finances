@@ -1264,15 +1264,30 @@
     var ul = $('dlg-wallet-recent');
     clear(ul);
     if (!w.recent.length) ul.appendChild(el('li', 'empty', 'No texts from ' + w.name + ' yet.'));
-    w.recent.forEach(function (t) {
-      var li = el('li');
+    // Every transaction, newest first, each with its category (tap it to change).
+    var SHOW = 25;
+    var addRow = function (t) {
+      var li = el('li', 'wal-tx');
       var name = el('span', 'wal-name');
-      name.appendChild(el('span', null, t.merchant || t.description || 'Transaction'));
-      name.appendChild(el('small', 'muted', when(t.datetime || t.date) + ' · ' + (t.link ? 'Between your accounts' : catLabel(t.category))));
+      name.appendChild(el('span', 'wal-tx-merchant', t.merchant || t.description || 'Transaction'));
+      name.appendChild(el('small', 'muted', when(t.datetime || t.date)));
       li.appendChild(name);
       li.appendChild(el('span', 'wal-amt' + (t.amount > 0 ? ' pos' : ''), (t.amount > 0 ? '+' : '') + money(t.amount)));
+      var cat = el('span', 'wal-tx-cat');
+      if (t.link) cat.appendChild(el('span', 'wal-chip', 'Between your accounts'));
+      else { var sel = categorySelect(t); sel.className = 'wal-chip-select'; sel.addEventListener('change', function () { renderWallets(); }); cat.appendChild(sel); }
+      li.appendChild(cat);
       ul.appendChild(li);
-    });
+    };
+    w.recent.slice(0, SHOW).forEach(addRow);
+    if (w.recent.length > SHOW) {
+      var more = el('li', 'wal-more');
+      var mb = el('button', 'btn-link', 'Show all ' + w.recent.length + ' transactions');
+      mb.type = 'button';
+      mb.addEventListener('click', function () { more.remove(); w.recent.slice(SHOW).forEach(addRow); });
+      more.appendChild(mb);
+      ul.appendChild(more);
+    }
     var unread = data.wallet_unread.filter(function (u) { return u.wallet === id; });
     $('dlg-wallet-unread-box').hidden = !unread.length;
     $('dlg-wallet-unread-title').textContent = unread.length + ' text' + (unread.length === 1 ? '' : 's') + ' the app couldn’t read';
@@ -1343,7 +1358,7 @@
   }
 
   // ---------- app version & updates ----------
-  var APP_VERSION = '29'; // keep in step with VERSION in sw.js
+  var APP_VERSION = '30'; // keep in step with VERSION in sw.js
   function showVersion() { $('app-version').textContent = APP_VERSION; $('footer-version').textContent = APP_VERSION; }
   // Fetch the newest app files: ask for a new offline worker, drop the old cached files, reload.
   // Reloading locks the app, so the data is saved first.

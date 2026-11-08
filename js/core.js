@@ -1379,7 +1379,7 @@
         anyKnown = true;
         if (def.kind === 'card') owed += Math.max(0, -b.balance); else total += b.balance;
       }
-      var recent = mine.slice().sort(function (a, b2) { return txTime(b2) - txTime(a) || b2.id - a.id; }).slice(0, 10).map(function (t) {
+      var recent = mine.slice().sort(function (a, b2) { return txTime(b2) - txTime(a) || b2.id - a.id; }).map(function (t) {
         return { id: t.id, date: t.date, datetime: t.datetime, amount: toSar(t.amount), merchant: t.merchant, description: t.description, category: t.category, type: t.type, link: !!t.link };
       });
       return {
