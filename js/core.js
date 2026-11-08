@@ -1195,7 +1195,8 @@
   var W_TOTAL_KW = /(?:total amount|total due amount|المبلغ الإجمالي|المبلغ الاجمالي|الإجمالي|الاجمالي)[^\d]{0,25}$/i;
   var W_FEE_KW = /(?:fees?(?: and vat)?|vat|رسوم|ضريبة)[^\d]{0,25}$/i;
   var W_WHO = /(?:^|[\s:،,])(لدى|عند|في|at|from|to|إلى|الى|لـ|من)(?![a-z])\s*:?\s*([^\n]+?)(?=\s*(?:بمبلغ|مبلغ|بقيمة|المبلغ|الرصيد|رصيد|المتاح|balance|available|remaining|\bbal\b|\bcard\b|\*|بتاريخ|تاريخ|بطاقة|عبر|في\s+\d|on\s+\d|\d{1,4}[\/\-.]\d|SAR|SR|ر\.?\s?س|ريال|\.(?=\s|$)|[،,;]|$))/gim;
-  var W_NOT_WHO = /محفظت|حساب|بطاقت|بطاقة|wallet|account|\bcard\b|\byour\b|رصيد|^\W*$|^[\d*\s]+$/i;
+  // No letters at all (Arabic counts as letters: plain \W would throw out an Arabic name).
+  var W_NOT_WHO = /محفظت|حساب|بطاقت|بطاقة|wallet|account|\bcard\b|\byour\b|رصيد|^[^A-Za-z؀-ۿ]*$|^[\d*\s]+$/i;
   var W_DATE = /\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/;
 
   /** Parse one wallet or credit card text. Returns a transaction-like object or null. */

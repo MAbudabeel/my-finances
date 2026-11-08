@@ -235,3 +235,39 @@ test('STC Pay: internal outward transfer', () => {
   assert.equal(t.merchant, 'A B');
   assert.equal(t.date, '2026-10-01T13:21:00+03:00');
 });
+
+// Real D360 Bank texts (sender "D360 Bank"); card and account digits changed.
+const D360_KEETA = 'Local Online Purchase\nAmount: SAR 69.52\nCard: *1111 - mada (Apple Pay)\nAt: Keeta\nAccount number: *2222\nOn: 2026-09-27 19:27';
+const D360_IN = 'Incoming Transfer: AlRajhi Bank\nAmount: SAR 70.00\nFrom: محمد أحمد ع****\nIBAN: ****2222\nat: 2026-09-27 19:28';
+const D360_BARQ = 'Local Online Purchase\nAmount: SAR 150.00\nCard: *1111 - mada (Apple Pay)\nAt: barq\nAccount number: *2222\nOn: 2026-11-04 21:38';
+
+test('D360: mada Apple Pay purchase, its own date kept', () => {
+  const t = Core.parseWalletSms(D360_KEETA, 'd360', { receivedAt: '2026-11-08T10:00:00+03:00' });
+  assert.equal(t.amount, -69.52);
+  assert.equal(t.merchant, 'Keeta');
+  assert.equal(t.card_last4, '1111');
+  assert.equal(t.date, '2026-09-27T19:27:00+03:00');
+});
+
+test('D360: incoming transfer from Al Rajhi keeps the Arabic sender name', () => {
+  const t = Core.parseWalletSms(D360_IN, 'd360', {});
+  assert.equal(t.amount, 70);
+  assert.equal(t.raw_category, 'transfer_in');
+  assert.equal(t.merchant, 'محمد أحمد ع');
+  assert.equal(t.date, '2026-09-27T19:28:00+03:00');
+});
+
+test('D360: balance follows the texts; Al Rajhi money in is one transfer; paying barq is not spending', async () => {
+  const d = Core.emptyData();
+  Core.setWalletStart(d, 'd360', 200, { at: '2026-09-27T10:00:00+03:00' });
+  await Core.importTexts(d, '##SMS##حوالة داخلية صادرة بـSR 70\nمن1234\nلـ5678;محمد أحمد\n26/9/27 19:28\n' +
+    W('D360', D360_KEETA, '2026-09-27T19:27:30+03:00') + W('D360', D360_IN, '2026-09-27T19:28:30+03:00') + W('D360', D360_BARQ, '2026-11-04T21:38:30+03:00'));
+  const v = Core.walletsView(d, Core.periodOf(d, '2026-09-27')).wallets.find((w) => w.id === 'd360');
+  assert.equal(v.balance, 50.48);
+  const by = (m) => d.transactions.find((x) => x.account === 'd360' && x.merchant === m);
+  assert.equal(by('Keeta').category, 'dining');
+  assert.equal(by('barq').category, 'transfer');
+  const inn = d.transactions.find((x) => x.account === 'd360' && x.amount > 0);
+  assert.ok(inn.link, 'paired with the Al Rajhi transfer out');
+  assert.equal(d.transactions.find((x) => x.id === inn.link).category, 'transfer');
+});
