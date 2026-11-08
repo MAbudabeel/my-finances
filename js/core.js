@@ -1174,8 +1174,8 @@
   // Which way the money went. The earliest match in the text wins; on a tie, the first rule.
   var W_RULES = [
     { re: /استرداد|استرجاع|refund|reversal|cash\s?back|كاش\s?باك/i, type: 'refund', channel: 'other', sign: +1 },
+    { re: /شحن\s*(?:ال)?محفظ|(?:إضافة|اضافة)\s*(?:ال)?(?:أموال|اموال|رصيد)|add(?:ed)? money|تعبئة\s*(?:ال)?محفظ|top.?up|wallet (?:was )?(?:topped|funded|loaded)/i, type: 'wallet_topup', channel: 'transfer', sign: +1 },
     { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:واردة|وارد)|استلمت|استلام|تم\s*استلام|وصلتك|وصلك|payment received|received|credited|أضيف|اضيف|إضافة|اضافة|إيداع|ايداع|deposit|incoming/i, type: 'transfer_in', channel: 'transfer', sign: +1 },
-    { re: /شحن\s*(?:ال)?محفظ|تعبئة\s*(?:ال)?محفظ|top.?up|wallet (?:was )?(?:topped|funded|loaded)/i, type: 'wallet_topup', channel: 'transfer', sign: +1 },
     { re: /سحب|withdraw|صراف|\batm\b/i, type: 'atm_withdrawal', channel: 'atm', sign: -1 },
     { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:صادرة|صادر)|حولت|تحويل\s*(?:مبلغ\s*)?(?:إلى|الى|لـ|ل\s)|transfer(?:red)?\s*to|\bsent\b|أرسلت|ارسلت|إرسال|ارسال/i, type: 'transfer_out', channel: 'transfer', sign: -1 },
     { re: /سداد\s*(?:فاتورة|فواتير)|فاتورة|sadad|\bbill\b/i, type: 'bill_payment', channel: 'sadad', sign: -1 },
@@ -1323,7 +1323,8 @@
         var best = null, bestGap = Infinity;
         free.forEach(function (o) {
           if (o.link || o === w || (o.account || null) === w.account || o.amount !== -w.amount) return;
-          var days = o.account ? (LINK_WALLET[o.raw_category] ? 3 : 0) : (LINK_BANK[o.raw_category] || 0);
+          // The other side may be the ANB card paying for a wallet top-up with Apple Pay (a purchase on the card).
+          var days = o.account ? (LINK_WALLET[o.raw_category] ? 3 : LINK_BANK[o.raw_category] === 1 ? 1 : 0) : (LINK_BANK[o.raw_category] || 0);
           // A purchase on the Al Rajhi card only pairs with money arriving in the wallet (Apple Pay top-up).
           if (days === 1 && w.amount < 0) days = 0;
           var gap = Math.abs(txTime(o) - txTime(w));

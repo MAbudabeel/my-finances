@@ -187,3 +187,23 @@ test('real urpay text: purchase taken off the balance, its own date kept', async
   assert.equal(u.balance, 36);
   assert.equal(d.transactions[0].category, 'dining');
 });
+
+// Real urpay top-up, paid with the ANB card through Apple Pay (card digits changed).
+const URPAY_TOPUP = 'إضافة الأموال عبر Apple Pay\nمبلغ:50 SR\nبطاقة: Visa - 1111\nإلى: urpay\n17-10-2026 19:59';
+
+test('real urpay top-up adds to urpay; paid by the ANB card it is one transfer, not spending', async () => {
+  const t = Core.parseWalletSms(URPAY_TOPUP, 'urpay', {});
+  assert.equal(t.amount, 50);
+  assert.equal(t.raw_category, 'wallet_topup');
+  assert.equal(t.date, '2026-10-17T19:59:00+03:00');
+  const d = Core.emptyData();
+  Core.setWalletStart(d, 'urpay', 39, { at: '2026-10-17T10:00:00+03:00' });
+  Core.setWalletStart(d, 'anb', 1000, { at: '2026-10-17T10:00:00+03:00', limit: 10000 });
+  await Core.importTexts(d, W('URPAY', URPAY_TOPUP, '2026-10-17T19:59:10+03:00') +
+    W('ANB', 'Online Purchase\nApple Pay\nVISA Card:1111\nAmount:SAR 50.00\nBalance:SAR 8,950.00\nAt:urpay\nOn:17/10/26 19:59', '2026-10-17T19:59:08+03:00'));
+  const v = Core.walletsView(d, Core.periodOf(d, '2026-10-17')).wallets;
+  assert.equal(v.find((w) => w.id === 'urpay').balance, 89);
+  assert.equal(v.find((w) => w.id === 'anb').balance, -1050);
+  assert.ok(d.transactions.every((x) => x.link && x.category === 'transfer'));
+  assert.equal(Core.monthSummary(d, Core.periodOf(d, '2026-10-17')).spending, 0);
+});
