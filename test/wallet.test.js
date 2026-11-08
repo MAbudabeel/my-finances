@@ -207,3 +207,31 @@ test('real urpay top-up adds to urpay; paid by the ANB card it is one transfer, 
   assert.ok(d.transactions.every((x) => x.link && x.category === 'transfer'));
   assert.equal(Core.monthSummary(d, Core.periodOf(d, '2026-10-17')).spending, 0);
 });
+
+// Real STC Bank (STC Pay) formats, card digits and names changed.
+test('STC Pay: foreign online purchase spends the SAR total with fees, keeps the balance', () => {
+  const t = Core.parseWalletSms('Online Purchase\nVia: *1234,Visa\nAmount: 149.05 USD\nFrom: ALIEXP\nExchange rate: 3.754176\nVAT: 0.00 SAR\nFees: 11.19 SAR\nTotal due amount: 570.75 SAR\nRemaining balance: 84.54 SAR\nCountry: LU\nAt: 03/11/26 22:33', 'stcpay', {});
+  assert.equal(t.amount, -570.75);
+  assert.equal(t.currency, 'SAR');
+  assert.equal(t.merchant, 'ALIEXP');
+  assert.equal(t.raw_category, 'online_purchase');
+  assert.equal(t.card_last4, '1234');
+  assert.equal(t.balance_after, 84.54);
+  assert.equal(t.date, '2026-11-03T22:33:00+03:00');
+});
+
+test('STC Pay: mada Apple Pay purchase', () => {
+  const t = Core.parseWalletSms('online purchase\nCard:*5678;mada-Apple Pay\nAmount:10 SR\nAccount number:0000 \nAt:barq \n27/10/26 00:02', 'stcpay', {});
+  assert.equal(t.amount, -10);
+  assert.equal(t.merchant, 'barq');
+  assert.equal(t.card_last4, '5678');
+  assert.equal(t.date, '2026-10-27T00:02:00+03:00');
+});
+
+test('STC Pay: internal outward transfer', () => {
+  const t = Core.parseWalletSms('Internal outward transfer\nAmount:100SR\nTo:A B\nAcc:000\nAt:01/10/26 13:21', 'stcpay', {});
+  assert.equal(t.amount, -100);
+  assert.equal(t.raw_category, 'transfer_out');
+  assert.equal(t.merchant, 'A B');
+  assert.equal(t.date, '2026-10-01T13:21:00+03:00');
+});

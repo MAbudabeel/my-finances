@@ -1177,7 +1177,7 @@
     { re: /شحن\s*(?:ال)?محفظ|(?:إضافة|اضافة)\s*(?:ال)?(?:أموال|اموال|رصيد)|add(?:ed)? money|تعبئة\s*(?:ال)?محفظ|top.?up|wallet (?:was )?(?:topped|funded|loaded)/i, type: 'wallet_topup', channel: 'transfer', sign: +1 },
     { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:واردة|وارد)|استلمت|استلام|تم\s*استلام|وصلتك|وصلك|payment received|received|credited|أضيف|اضيف|إضافة|اضافة|إيداع|ايداع|deposit|incoming/i, type: 'transfer_in', channel: 'transfer', sign: +1 },
     { re: /سحب|withdraw|صراف|\batm\b/i, type: 'atm_withdrawal', channel: 'atm', sign: -1 },
-    { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:صادرة|صادر)|حولت|تحويل\s*(?:مبلغ\s*)?(?:إلى|الى|لـ|ل\s)|transfer(?:red)?\s*to|\bsent\b|أرسلت|ارسلت|إرسال|ارسال/i, type: 'transfer_out', channel: 'transfer', sign: -1 },
+    { re: /(?:حوالة|تحويل)\s*(?:مالية\s*)?(?:صادرة|صادر)|حولت|تحويل\s*(?:مبلغ\s*)?(?:إلى|الى|لـ|ل\s)|transfer(?:red)?\s*to|(?:outward|outgoing)\s*transfer|transfer\s*out\b|\bsent\b|أرسلت|ارسلت|إرسال|ارسال/i, type: 'transfer_out', channel: 'transfer', sign: -1 },
     { re: /سداد\s*(?:فاتورة|فواتير)|فاتورة|sadad|\bbill\b/i, type: 'bill_payment', channel: 'sadad', sign: -1 },
     { re: /رسوم|\bfees?\b/i, type: 'fee', channel: 'other', sign: -1 },
     { re: /شراء\s*(?:إنترنت|انترنت|عبر الإنترنت|عبر الانترنت|اونلاين)|online|e-?commerce|internet purchase/i, type: 'online_purchase', channel: 'online', sign: -1 },
@@ -1189,12 +1189,12 @@
   var W_AMOUNT_BARE = new RegExp('(?:بمبلغ|مبلغ|بقيمة|المبلغ|amount)\\s*:?\\s*' + NUM, 'i');
   var W_BAL_KW = /(?:رصيدك|الرصيد|رصيد|balance|\bbal\b)[^\d]{0,25}$/i;
   var W_AVAIL_KW = /(?:المتاح|الحد المتاح|الرصيد المتاح|available(?:\s*(?:credit|limit|balance))?)[^\d]{0,25}$/i;
-  var W_OWED_KW = /(?:المستحق|المبلغ المستحق|الرصيد المستحق|outstanding|amount due|total due)[^\d]{0,25}$/i;
+  var W_OWED_KW = /(?:المستحق|المبلغ المستحق|الرصيد المستحق|outstanding|amount due|total due(?!\s*amount))[^\d]{0,25}$/i;
   var W_AMT_KW = /(?:بمبلغ|مبلغ|بقيمة|amount|شراء|purchase)[^\d]{0,25}$/i;
   // ANB: "Total amount:SAR 190.42" is the purchase plus fees and VAT; that's what leaves the card.
-  var W_TOTAL_KW = /(?:total amount|المبلغ الإجمالي|المبلغ الاجمالي|الإجمالي|الاجمالي)[^\d]{0,25}$/i;
+  var W_TOTAL_KW = /(?:total amount|total due amount|المبلغ الإجمالي|المبلغ الاجمالي|الإجمالي|الاجمالي)[^\d]{0,25}$/i;
   var W_FEE_KW = /(?:fees?(?: and vat)?|vat|رسوم|ضريبة)[^\d]{0,25}$/i;
-  var W_WHO = /(?:^|[\s:،,])(لدى|عند|في|at|from|to|إلى|الى|لـ|من)\s*:?\s*([^\n]+?)(?=\s*(?:بمبلغ|مبلغ|بقيمة|المبلغ|الرصيد|رصيد|المتاح|balance|available|remaining|\bbal\b|\bcard\b|\*|بتاريخ|تاريخ|بطاقة|عبر|في\s+\d|on\s+\d|\d{1,4}[\/\-.]\d|SAR|SR|ر\.?\s?س|ريال|\.(?=\s|$)|[،,;]|$))/gim;
+  var W_WHO = /(?:^|[\s:،,])(لدى|عند|في|at|from|to|إلى|الى|لـ|من)(?![a-z])\s*:?\s*([^\n]+?)(?=\s*(?:بمبلغ|مبلغ|بقيمة|المبلغ|الرصيد|رصيد|المتاح|balance|available|remaining|\bbal\b|\bcard\b|\*|بتاريخ|تاريخ|بطاقة|عبر|في\s+\d|on\s+\d|\d{1,4}[\/\-.]\d|SAR|SR|ر\.?\s?س|ريال|\.(?=\s|$)|[،,;]|$))/gim;
   var W_NOT_WHO = /محفظت|حساب|بطاقت|بطاقة|wallet|account|\bcard\b|\byour\b|رصيد|^\W*$|^[\d*\s]+$/i;
   var W_DATE = /\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?/;
 
@@ -1243,7 +1243,8 @@
       var v = m[2].replace(/\*+\d*|\d{4,}/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
       if (v && !W_NOT_WHO.test(v)) who.push({ kw: m[1].toLowerCase(), v: v });
     }
-    var prefer = rule.sign > 0 ? ['من', 'from'] : ['لدى', 'عند', 'at', 'لـ', 'إلى', 'الى', 'to', 'في'];
+    // STC Bank names the shop after "From:" on purchases, so that comes last for money out.
+    var prefer = rule.sign > 0 ? ['من', 'from'] : ['لدى', 'عند', 'at', 'لـ', 'إلى', 'الى', 'to', 'في', 'from'];
     var pick = null;
     prefer.some(function (k) { pick = who.find(function (w) { return w.kw === k; }); return !!pick; });
     var merchant = pick ? pick.v : null;
@@ -1253,7 +1254,7 @@
     var date = dt && /\d:\d\d/.test(dt[0]) ? parseSmsDate(dt[0], meta.receivedAt) : null;
     if (!date && meta.receivedAt) date = parseSmsDate(null, meta.receivedAt);
     if (!date && dt) date = parseSmsDate(dt[0], null);
-    var card = t.match(/(?:بطاقة|البطاقة|card)[^\d\n]{0,12}\*?(\d{4})(?!\d)/i);
+    var card = t.match(/(?:بطاقة|البطاقة|card|via)[^\d\n]{0,12}\*?(\d{4})(?!\d)/i);
     var label = { refund: 'Refund', transfer_in: 'Money in', wallet_topup: 'Top-up', atm_withdrawal: 'Cash withdrawal', transfer_out: 'Transfer out',
       bill_payment: 'Bill payment', fee: 'Fee', online_purchase: 'Online purchase', pos_purchase: 'Payment', card_payment: 'Card payment' }[rule.type];
     var foreign = amount.currency !== 'SAR';
