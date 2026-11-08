@@ -278,3 +278,12 @@ test('simple setup: wallet text in the Al Rajhi file, no ##AT## and no date, sti
   assert.equal(r.inserted, 2);
   assert.ok(d.transactions.find((t) => t.account === 'barq').date);
 });
+
+test('ANB and D360 texts copied by hand without a tag are still read as wallet texts', async () => {
+  const anb = await Core.parseTexts('Online Purchase\nApple Pay\nVISA Card:1111\nAmount:SAR 25.00\nBalance:SAR 4,000.00\nAt:KUDU\nOn:08/11/26 20:10');
+  assert.equal(anb.parsed[0].account, 'anb');
+  const d = await Core.parseTexts('Local Online Purchase\nAmount: SAR 12.00\nCard: *1111 - mada (Apple Pay)\nAt: JAHEZ\nAccount number: *1111\nOn: 2026-11-08 20:00');
+  assert.equal(d.parsed[0].account, 'd360');
+  const ar = await Core.parseTexts('شراء عبر نقاط البيع\nبطاقة:1111;مدى\nمبلغ:SAR 10\nلدى:KUDU\n8/11/26 20:10');
+  assert.equal(ar.parsed[0].account || null, null);
+});

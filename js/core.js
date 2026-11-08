@@ -224,6 +224,14 @@
   var AT_RE = /##AT##\s*([0-9T:+\-.Z ]{10,40})/;
   // First line of an alert (purchase, card payoff, deposit, transfer, ATM, bill, refund, fee).
   var HEADER_START = /^(شراء|بطاقة[^:\d]*:\s*سداد|إيداع|ايداع|حوالة|تحويل|سحب|سداد|استرداد|استرجاع|رسوم|online purchase|pos purchase|purchase|atm withdrawal|incoming transfer|outgoing transfer|salary|refund)/i;
+  // English layouts no Al Rajhi text uses: ANB card ("VISA Card:1234 ... At: ... On:") and D360 ("mada ... Account number:").
+  function guessWalletFromText(t) {
+    if (/VISA\s*Card\s*:\s*\d{4}/i.test(t) && /^\s*At\s*:/im.test(t)) return 'anb';
+    if (/^\s*Account number\s*:/im.test(t) && /^\s*(?:Amount|On|at)\s*:/im.test(t)) return 'd360';
+    if (/D360/i.test(t) && /Amount\s*:\s*SAR/i.test(t)) return 'd360';
+    return null;
+  }
+
   function splitMessages(input) {
     var text = String(input || '').replace(/\r\n?/g, '\n')
       .replace(/##WALLET-DONE##/g, '\n')
@@ -261,6 +269,8 @@
       var t = m.lines.join('\n').trim(), at = t.match(AT_RE);
       if (at) t = t.replace(AT_RE, '').trim();
       if (m.wallet && !t) return null;
+      // A wallet text pasted by hand (no tag) is still known by its layout.
+      if (!m.wallet) m.wallet = guessWalletFromText(t);
       return {
         text: t, receivedAt: (at && at[1].trim()) || m.receivedAt || null, wallet: m.wallet || null,
         // Wallet texts are told apart by when they arrived too: two identical 25 SAR coffees are two payments.
