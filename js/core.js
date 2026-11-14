@@ -1000,8 +1000,104 @@
   var STMT_DATE = /^(\d{4})\/(\d{2})\/(\d{2})$/;
   var STMT_AMOUNT = /^([\d,]+\.\d{2})\s*SAR$/;
 
+  // Arabic statement (كشف حساب in Arabic): the date is on the right, amounts on the left
+  // (balance, credit, debit), and the details are in Arabic. Turned into the same row shape
+  // as the English statement so the rest of the import is shared.
+  var AR_TYPES = [
+    [/رسوم/, 'Transaction charges'],
+    [/بين حساباتك|بين الحسابات/, 'Transfer between accounts'],
+    [/قسط|تمويل/, 'Loan installment'],
+    [/بطاق[ةه] (?:ائتمان|فيزا)|سداد بطاق/, 'Credit card payment'],
+    [/استرداد|استرجاع|عكس/, 'Refund'],
+    [/سداد|فاتور/, 'SADAD bill payment'],
+    [/صراف|سحب نقد/, 'ATM cash withdrawal'],
+    [/شراء انترنت|شراء إنترنت|انترنت/, 'Online purchase'],
+    [/شراء|نقاط البيع/, 'POS purchase'],
+    [/راتب/, 'Payroll'],
+    [/وارد/, 'Inward transfer'],
+    [/صادر|تحويل|حوال/, 'Outward transfer']
+  ];
+  var AR_DETAIL_LABELS = /^(?:تفاصيل العملية|التاريخ|الرصيد|دائن|مدين|الرقم التسلسلي)$/;
+  function arabicStatementRow(date, amounts, details) {
+    // pdf.js gives Arabic presentation forms; NFKC turns them back into normal letters.
+    var lines = details.map(function (d) { return d.s.normalize('NFKC').replace(/\u0640/g, '').replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+    var typeLines = lines.filter(function (l) { return !/الوقت\s*:/.test(l) && /[\u0600-\u06FF]/.test(l) && !/,\s*[A-Z]{2}$/.test(l); });
+    var noteLine = lines.filter(function (l) { return /الوقت\s*:/.test(l); })[0] || '';
+    var placeLines = lines.filter(function (l) { return typeLines.indexOf(l) === -1 && l !== noteLine; });
+    var typeAr = typeLines.join(' ');
+    var type = '';
+    for (var i = 0; i < AR_TYPES.length; i++) if (AR_TYPES[i][0].test(typeAr)) { type = AR_TYPES[i][1]; break; }
+    if (/Apple Pay/i.test(typeAr)) type += ' Apple pay';
+    var time = (noteLine.match(/الوقت\s*:\s*(\d{2}:\d{2}:\d{2})/) || [])[1] || '';
+    // Mixed Arabic/English lines come out of the PDF in visual order: pull the pieces out by shape.
+    var rest = noteLine.replace(/الوقت\s*:\s*\d{2}:\d{2}:\d{2}\s*,?/, ' ').replace(/ملاحظة\s*:?/, ' ').replace(/\s+/g, ' ').trim();
+    var notes;
+    var w = rest.match(/W-\/(FR|TO)ACCT\/(\d+)(FR|TO)(\S*)/);
+    if (w) {
+      var strip = function (x) { return String(x || '').replace(/^[\s:,-]+|[\s:,-]+$/g, '').trim(); };
+      var name = strip(w[4]) || strip(rest.replace(w[0], ''));
+      notes = 'W-/' + w[1] + 'ACCT/' + w[2] + w[3] + name;
+    } else {
+      var ref = rest.match(/\([^)]*\)/);
+      var before = ref ? rest.slice(0, ref.index).replace(/^[\s:,]+|[\s:,]+$/g, '') : '';
+      var after = ref ? rest.slice(ref.index + ref[0].length).replace(/^[\s:,]+|[\s:,]+$/g, '') : rest.replace(/^[\s:,]+|[\s:,]+$/g, '');
+      var place = placeLines.join(' ');
+      if (ref) notes = (ref[0] + ' ' + [before, after, place].filter(Boolean).join(' ')).trim();
+      else notes = [after, place].filter(Boolean).join(' ');
+    }
+    if (/SADAD/.test(type)) {
+      // Keep what was paid for (e.g. vehicle registration) as the description.
+      var what = typeAr.replace(/مدفوعات|سداد|-/g, ' ').replace(/\s+/g, ' ').trim();
+      if (what) type = 'SADAD bill - ' + what;
+      notes = '';
+    }
+    return {
+      date: date, type: type || typeAr,
+      notes: (time ? 'Time: ' + time + ', ' : '') + 'Notes: ' + notes,
+      debit: amounts[2], credit: amounts[1], balance: amounts[0]
+    };
+  }
+
   /** items: [{page, x, y, str}] (y grows upwards, as in PDF). Returns rows {date, type, notes, debit, credit, balance}. */
   function statementRows(items) {
+    var rows = statementRowsEnglish(items);
+    return rows.length ? rows : statementRowsArabic(items);
+  }
+
+  function statementRowsArabic(items) {
+    var pages = {};
+    items.forEach(function (it) {
+      var s = String(it.str || '').trim();
+      if (!s) return;
+      (pages[it.page] || (pages[it.page] = [])).push({ x: Number(it.x), y: Number(it.y), s: s });
+    });
+    var rows = [];
+    Object.keys(pages).sort(function (a, b) { return a - b; }).forEach(function (pg) {
+      var list = pages[pg];
+      var anchors = list.filter(function (it) { return it.x > 400 && STMT_DATE.test(it.s); }).sort(function (a, b) { return b.y - a.y; });
+      if (!anchors.length) return;
+      var pageRows = anchors.map(function (a) { return { anchor: a, details: [], amounts: [] }; });
+      list.forEach(function (it) {
+        if (anchors.indexOf(it) !== -1) return;
+        var best = null, dist = Infinity;
+        pageRows.forEach(function (r) { var d = Math.abs(r.anchor.y - it.y); if (d < dist) { dist = d; best = r; } });
+        if (!best || dist > 12) return;
+        if (STMT_AMOUNT.test(it.s) && dist <= 3 && it.x < 300) best.amounts.push(it);
+        else if (it.x >= 290 && it.x < 490 && !AR_DETAIL_LABELS.test(it.s.normalize('NFKC'))) best.details.push(it);
+      });
+      pageRows.forEach(function (r) {
+        if (r.amounts.length < 3) return;
+        r.amounts.sort(function (a, b) { return a.x - b.x; });
+        r.details.sort(function (a, b) { return b.y - a.y || a.x - b.x; });
+        var m = r.anchor.s.match(STMT_DATE);
+        var nums = r.amounts.slice(0, 3).map(function (it) { return Number(it.s.match(STMT_AMOUNT)[1].replace(/,/g, '')); });
+        rows.push(arabicStatementRow(m[1] + '-' + m[2] + '-' + m[3], nums, r.details));
+      });
+    });
+    return rows;
+  }
+
+  function statementRowsEnglish(items) {
     var pages = {};
     items.forEach(function (it) {
       var s = String(it.str || '').trim();

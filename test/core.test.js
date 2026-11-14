@@ -485,3 +485,33 @@ test('plan: before any salary the plan says so instead of a negative number', as
   assert.equal(p.bills.length, 0);
   assert.equal(p.recap.has_data, false);
 });
+
+test('Arabic account statement (كشف حساب in Arabic): rows read from the right-to-left layout', () => {
+  // Made-up rows in the layout pdf.js returns for the Arabic statement (presentation-form letters).
+  const P = (s) => s; // the parser normalises with NFKC, so plain Arabic works the same
+  const row = (y, date, bal, cr, dr, lines) => [
+    { page: 2, x: 60, y, str: bal + ' SAR' }, { page: 2, x: 159, y, str: cr + ' SAR' }, { page: 2, x: 249, y, str: dr + ' SAR' },
+    { page: 2, x: 497, y, str: date },
+    ...lines.map((l, i) => ({ page: 2, x: 330 + i, y: y + 6 - i * 7, str: l }))
+  ];
+  const items = [
+    { page: 2, x: 71, y: 803, str: 'ﺍﻟﺮﺻﻴﺪ' }, { page: 2, x: 508, y: 803, str: 'ﺍﻟﺘﺎﺭﻳﺦ' },
+    ...row(778, '2026/11/06', '990.00', '0.00', '10.00', ['ﺷﺮﺍﺀ ﻋﺒﺮ ﻧﻘﺎﻁ ﺍﻟﺒﻴﻊ Apple Pay )ﻣﺤﻠﻲ(', 'TEA (111-222):ﺍﻟﻮﻗﺖ:20:45:44, ﻣﻼﺣﻈﺔ', 'COLORS, RIYADH, SA']),
+    ...row(752, '2026/11/07', '940.00', '0.00', '50.00', ['ﻋﻤﻠﻴﺔ ﺗﺤﻮﻳﻞ ﺩﺍﺧﻠﻴﺔ', '-ﺳﺎﺭﺓW-/TOACCT/12345678TO:ﺍﻟﻮﻗﺖ:23:39:59, ﻣﻼﺣﻈﺔ']),
+    ...row(726, '2026/11/07', '990.00', '50.00', '0.00', ['ﻋﻤﻠﻴﺔ ﺗﺤﻮﻳﻞ ﺩﺍﺧﻠﻴﺔ', 'ﺍﻟﻮﻗﺖ:23:42:42, ﻣﻼﺣﻈﺔ:W-/FRACCT/12345678FRﺳﺎﺭﺓ']),
+    ...row(700, '2026/11/09', '690.00', '0.00', '300.00', [P('ﺗﺴﺠﻴﻞ ﺍﻟﻤﺮﻛﺒﺎﺕ مدفوعات سـداد -'), 'W -/026-1-2:ﺍﻟﻮﻗﺖ:14:19:27, ﻣﻼﺣﻈﺔ']),
+    ...row(674, '2026/11/10', '689.71', '0.00', '0.29', ['ﺭﺳﻮﻡ ﺣﻮﺍﻟﺔ ﻓﻮﺭﻳﺔ ﺻﺎﺩﺭﺓ', 'ﺍﻟﻮﻗﺖ:00:00:43, ﻣﻼﺣﻈﺔ:9110000000000001/ﻓﻼﻥ']),
+    ...row(648, '2026/11/12', '589.71', '0.00', '100.00', ['ﺷﺮﺍﺀ ﺍﻧﺘﺮﻧﺖ Apple Pay )ﻣﺤﻠﻲ(', 'Online Purchase from barq, Riyadh:ﺍﻟﻮﻗﺖ:14:47:02, ﻣﻼﺣﻈﺔ'])
+  ];
+  const rows = Core.statementRows(items);
+  assert.equal(rows.length, 6);
+  const tx = rows.map(Core.statementTransaction);
+  assert.deepEqual(tx.map((t) => t.amount), [-10, -50, 50, -300, -0.29, -100]);
+  assert.deepEqual(tx.map((t) => t.raw_category), ['pos_purchase', 'transfer_out', 'transfer_in', 'bill_payment', 'fee', 'online_purchase']);
+  assert.equal(tx[0].merchant, 'TEA COLORS');
+  assert.equal(tx[0].date, '2026-11-06T20:45:44+03:00');
+  assert.equal(tx[1].merchant, 'سارة');
+  assert.equal(tx[2].merchant, 'سارة');
+  assert.match(tx[3].description, /تسجيل المركبات/);
+  assert.equal(tx[5].merchant, 'barq');
+});
