@@ -2,7 +2,7 @@
 // without a connection. It never sees your financial data, which lives only in
 // the page's encrypted IndexedDB.
 'use strict';
-var VERSION = 'finances-v32'; // keep in step with APP_VERSION in js/app.js
+var VERSION = 'finances-v33'; // keep in step with APP_VERSION in js/app.js
 var FILES = ['./', 'index.html', 'styles.css', 'manifest.webmanifest', 'js/core.js', 'js/store.js', 'js/demo.js', 'js/statement.js', 'js/app.js', 'vendor/pdfjs/pdf.min.mjs', 'vendor/pdfjs/pdf.worker.min.mjs',
   'icons/apple-touch-icon.png', 'icons/favicon-32.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 

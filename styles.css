@@ -423,3 +423,10 @@ td.num .tx-desc { text-align: right; }
 .wal-chip-select { width: auto; }
 .wal-chip { color: var(--accent-deep); background: var(--accent-soft); }
 .wal-chip.wal-chip-muted { color: var(--text-muted); background: var(--surface-2, #eef2f7); }
+
+/* Gap in bank texts: the "Last added" line turns amber, no popup. */
+#last-import.stale { color: var(--warn-text); }
+details.help { margin: 8px 0; }
+details.help summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.help ol { margin: 8px 0 0; padding-left: 20px; }
+details.help li { margin-bottom: 6px; }

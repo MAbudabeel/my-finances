@@ -16,6 +16,7 @@
   // Wrong-password count survives reloads (localStorage holds only these two numbers).
   var lockState = (function () { try { var v = JSON.parse(localStorage.getItem('finance-lock') || '{}'); return { failed: +v.failed || 0, waitUntil: +v.waitUntil || 0 }; } catch (e) { return { failed: 0, waitUntil: 0 }; } })();
   var clipRead = null; // asked once per app start, kept across wrong-password tries
+  var clipFailed = false; // the phone refused the clipboard read at unlock (Paste not tapped, Face ID sheet in the way)
   function saveLockState() { try { localStorage.setItem('finance-lock', JSON.stringify(lockState)); } catch (e) { /* ignore */ } }
 
   var categoryLabels = {};
@@ -26,7 +27,6 @@
   var sarWhole = new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', maximumFractionDigits: 0 });
   var sarShort = new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', notation: 'compact', maximumFractionDigits: 1 });
   var monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' });
-  var monthShort = new Intl.DateTimeFormat('en-GB', { month: 'short' });
   var monthShort = new Intl.DateTimeFormat('en-GB', { month: 'short' });
   var dayFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
   var dayYearFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -148,7 +148,8 @@
   // Pick up bank texts the iPhone automation left on the clipboard. Must start inside the Unlock tap.
   function startClipboardRead() {
     if (settings.autoPaste && !clipRead && navigator.clipboard && navigator.clipboard.readText) {
-      clipRead = navigator.clipboard.readText().catch(function () { clipRead = null; return null; });
+      clipFailed = false;
+      clipRead = navigator.clipboard.readText().catch(function (err) { console.warn('clipboard', err); clipRead = null; clipFailed = true; return null; });
     }
     return clipRead || Promise.resolve(null);
   }
@@ -630,7 +631,12 @@
   // ---------- adding texts ----------
   function renderImportStatus() {
     var last = data.meta && data.meta.last_import_at;
-    $('last-import').textContent = last ? 'Last added ' + stampFmt.format(new Date(last)) : 'No texts added yet.';
+    var li = $('last-import');
+    li.textContent = last ? 'Last added ' + stampFmt.format(new Date(last)) : 'No texts added yet.';
+    // Bank texts normally arrive every day or two. A long gap usually means the iPhone automation stopped.
+    var quiet = last && !demo ? Math.floor((Date.now() - Date.parse(last)) / 86400000) : 0;
+    li.classList.toggle('stale', quiet >= 3);
+    if (quiet >= 3) li.textContent += ' · nothing new for ' + quiet + ' days. If you’ve had bank texts since, check the iPhone automation (Settings → Al Rajhi texts).';
     $('tx-total').textContent = data.transactions.length + ' transactions saved on this phone.';
   }
 
@@ -703,8 +709,29 @@
   // Texts found on the clipboard at unlock: add them quietly, report only when something is new.
   var BANK_HINT = /##SMS##|##WALLET:|بـ|مبلغ|سحب|القسط/;
   function autoImport(text) {
-    if (!text || !BANK_HINT.test(text) || text.length > 2000000) return;
-    Core.importTexts(data, text).then(function (r) {
+    if (!data) return;
+    if (!text && clipFailed && settings.autoPaste) {
+      // Quiet line, no popup: say why nothing new showed up and what to tap.
+      var note = $('import-result');
+      note.textContent = 'Your phone didn’t let the app read new bank texts this time. Tap Paste texts to add them.';
+      note.dataset.tone = 'warn'; note.hidden = false;
+      return;
+    }
+    if (!text || !BANK_HINT.test(text)) return;
+    if (text.length > 2000000) {
+      var big = $('import-result');
+      big.textContent = 'The bank texts file on your iPhone has grown too big to read at once. Copy a text by hand for now, and ask for help starting a fresh file.';
+      big.dataset.tone = 'warn'; big.hidden = false;
+      return;
+    }
+    Core.importTexts(data, text).catch(function (err) {
+      console.error(err);
+      var box = $('import-result');
+      box.textContent = 'Couldn’t read the bank texts this time. Tap Paste texts to try again.';
+      box.dataset.tone = 'warn'; box.hidden = false;
+      return null;
+    }).then(function (r) {
+      if (!r) return;
       if (r.wallet_texts) markWalletDone();
       if (r.unread) persist();
       if (!r.inserted) return;
@@ -1358,7 +1385,7 @@
   }
 
   // ---------- app version & updates ----------
-  var APP_VERSION = '32'; // keep in step with VERSION in sw.js
+  var APP_VERSION = '33'; // keep in step with VERSION in sw.js
   function showVersion() { $('app-version').textContent = APP_VERSION; $('footer-version').textContent = APP_VERSION; }
   // Fetch the newest app files: ask for a new offline worker, drop the old cached files, reload.
   // Reloading locks the app, so the data is saved first.

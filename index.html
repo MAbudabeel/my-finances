@@ -346,6 +346,16 @@
             <div class="card-head"><h2 id="iph-title">Al Rajhi texts</h2></div>
             <p class="small">Your iPhone automation saves each Al Rajhi text to <b>bank-texts.txt</b> and copies that file. When you unlock this app, it reads the copied texts (tap <b>Paste</b> when iOS asks) and adds the new ones. Texts already added are skipped.</p>
             <p class="small">Missed one? Copy a text in Messages (press and hold → Copy) and tap <b>Paste texts</b> on the Overview.</p>
+            <details class="help small">
+              <summary>New texts stopped showing up?</summary>
+              <ol>
+                <li>Shortcuts → <b>Automation</b>: the Al Rajhi automation (and each wallet one) must be on and set to <b>Run Immediately</b>. An iOS update can switch this back to “Run After Confirmation”.</li>
+                <li>Tap the automation → <b>▶</b> to test it. Then open this app and tap <b>Paste texts</b>. A test line saying the text is “already added” or “ignored” means the automation works.</li>
+                <li>If ▶ shows an error about <b>bank-texts.txt</b>, the file was moved, renamed or deleted in the Files app. Point the <b>Append</b> step at it again.</li>
+                <li>Copying anything else (a link, a photo) after a bank text replaces the clipboard. Nothing is lost: the next bank text copies the whole file again, or tap Paste after the ▶ test.</li>
+                <li>Using Face ID to unlock? If iOS doesn’t show <b>Paste</b>, tap <b>Paste texts</b> on the Overview after unlocking.</li>
+              </ol>
+            </details>
             <p class="muted small" id="tx-total"></p>
           </section>
 
